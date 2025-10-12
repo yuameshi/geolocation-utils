@@ -70,6 +70,16 @@ def enableSeparateBuildPerCPUArchitecture = true
 def enableProguardInReleaseBuilds = true
 
 /**
+ * Private function to get the list of Native Architectures you want to build.
+ * This reads the value from reactNativeArchitectures in your gradle.properties
+ * file and works together with the --active-arch-only flag of react-native run-android.
+ */
+def reactNativeArchitectures() {
+	def value = project.getProperties().get("reactNativeArchitectures")
+	return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
+}
+
+/**
  * The preferred build flavor of JavaScriptCore (JSC)
  *
  * For example, to use the international variant, you can use:
@@ -95,6 +105,16 @@ android {
         versionCode 1
         versionName "1.0"
     }
+
+	splits {
+		abi {
+			reset()
+			enable enableSeparateBuildPerCPUArchitecture
+			universalApk true  // If true, also generate a universal APK
+			include (*reactNativeArchitectures())
+		}
+	}
+
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
