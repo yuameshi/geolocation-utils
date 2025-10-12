@@ -1,4 +1,4 @@
-package com.geolocationutils
+package top.yuameshi.geolocation.utils
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
