@@ -22,6 +22,7 @@ export const Odometer = () => {
 	const [speed, setSpeed] = useState(0);
 	const gravityRef = useRef({ x: 0, y: 0, z: 0 });
 	const [accelerationMagnitude, setAcceleratedMagnitude] = useState(0);
+	const [showLocation, setShowLocation] = useState(true);
 	const [latitude, setLatitude] = useState('0 0\' 0.0"');
 	const [longitude, setLongitude] = useState('0 0\' 0.0"');
 	const [latHemisphere, setLatHemisphere] = useState<'N' | 'S'>('N');
@@ -260,26 +261,40 @@ export const Odometer = () => {
 							{UnitAdapter[unit].acceleratedSpeed(accelerationMagnitude).toFixed(1)} {UnitAdapter[unit].units.acceleratedSpeed}
 						</Text>
 					</View>
-					<View style={styles.coordinatesContainer}>
-						<Text style={styles.coordinates}>
-							{latitude} {latHemisphere}
-						</Text>
-						<Text style={styles.coordinatesSeparator}>·</Text>
-						<Text style={[styles.coordinates, styles.coordinatesRight]}>
-							{longitude} {lonHemisphere}
-						</Text>
-					</View>
-					{addressLine && (
-						<View style={styles.addressRow}>
-							<View style={styles.addressIcon}>
-								<Icon
-									source="map-marker"
-									size={18}
-								/>
-							</View>
-							<Text style={styles.addressText}>{addressLine}</Text>
-						</View>
-					)}
+					<TouchableOpacity
+						style={styles.speedContainer}
+						onPress={() => {
+							setShowLocation(!showLocation);
+							ToastAndroid.show(!showLocation ? 'Showing coordinates/location' : 'Hiding coordinates/location', ToastAndroid.SHORT);
+						}}
+					>
+						{showLocation ? (
+							<>
+								<View style={styles.coordinatesContainer}>
+									<Text style={styles.coordinates}>
+										{latitude} {latHemisphere}
+									</Text>
+									<Text style={styles.coordinatesSeparator}>·</Text>
+									<Text style={[styles.coordinates, styles.coordinatesRight]}>
+										{longitude} {lonHemisphere}
+									</Text>
+								</View>
+								{addressLine && (
+									<View style={styles.addressRow}>
+										<View style={styles.addressIcon}>
+											<Icon
+												source="map-marker"
+												size={18}
+											/>
+										</View>
+										<Text style={styles.addressText}>{addressLine}</Text>
+									</View>
+								)}
+							</>
+						) : (
+							<Text style={styles.locationHidden}>LOCATION HIDDEN</Text>
+						)}
+					</TouchableOpacity>
 				</Surface>
 
 				{/* Right column */}
@@ -436,5 +451,13 @@ const styles = StyleSheet.create({
 	addressText: {
 		fontSize: 14,
 		opacity: 0.9,
+	},
+	locationHidden: {
+		marginTop: 10,
+		fontSize: 16,
+		fontWeight: 'bold',
+		opacity: 0.4,
+		letterSpacing: 4,
+		textTransform: 'uppercase',
 	},
 });
