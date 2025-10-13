@@ -3,7 +3,7 @@ import { Icon, Surface, Text, useTheme } from 'react-native-paper';
 import { Platform, StyleSheet, ToastAndroid, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { reverseGeocodeLocation } from 'react-native-geocoder-sdk';
-import Geolocation from '@react-native-community/geolocation';
+import Geolocation, { type GeolocationResponse } from '@react-native-community/geolocation';
 import CompassHeading from 'react-native-compass-heading';
 import { accelerometer, gravity, SensorTypes, setUpdateIntervalForType } from 'react-native-sensors';
 import { UnitAdapter } from '../utils/unit-adapter';
@@ -18,6 +18,7 @@ export const Odometer = () => {
 	} = useTheme();
 
 	const [time, setTime] = useState('00:00:00');
+	const [lastUpdateTs, setLastUpdateTs] = useState(0);
 	const [speed, setSpeed] = useState(0);
 	const gravityRef = useRef({ x: 0, y: 0, z: 0 });
 	const [accelerationMagnitude, setAcceleratedMagnitude] = useState(0);
@@ -89,81 +90,100 @@ export const Odometer = () => {
 		return () => CompassHeading.stop();
 	}, []);
 
+	const processGeolocation = (position: GeolocationResponse) => {
+		setLastUpdateTs(position.timestamp);
+		const date = new Date(position.timestamp);
+		const hours = date.getHours().toString().padStart(2, '0');
+		const minutes = date.getMinutes().toString().padStart(2, '0');
+		const seconds = date.getSeconds().toString().padStart(2, '0');
+		setTime(`${hours}:${minutes}:${seconds}`);
+		setSpeed(position.coords.speed ?? 0);
+		setLatitude(parseRadius(position.coords.latitude));
+		setLongitude(parseRadius(position.coords.longitude));
+		reverseGeocodeLocation({
+			latitude: position.coords.latitude,
+			longitude: position.coords.longitude,
+		})
+			.then(res => {
+				if (Platform.OS === 'android') {
+					if (res.addressLine && res.locality) {
+						// If locality appears multiple times in addressLine, remove all but the last occurrence
+						if (res.addressLine.indexOf(res.locality) !== res.addressLine.lastIndexOf(res.locality)) {
+							const parts = res.addressLine.split(res.locality);
+							// Remove empty parts and join the rest
+							setAddressLine(
+								parts
+									.filter((part: string) => part.trim() !== '')
+									.join(res.locality)
+									.trim(),
+							);
+						} else {
+							setAddressLine(res.addressLine);
+						}
+					} else if (res.addressLine) {
+						setAddressLine(res.addressLine);
+					} else if (res.locality) {
+						setAddressLine(res.locality);
+					}
+				} else if (Platform.OS === 'ios') {
+					const parts = [];
+					if (res.name) parts.push(res.name);
+					if (res.locality) parts.push(res.locality);
+					if (res.administrativeArea && res.administrativeArea !== res.locality) parts.push(res.administrativeArea);
+					if (res.country) parts.push(res.country);
+					if (parts.length > 0) {
+						setAddressLine(parts.join(', '));
+					}
+				} else {
+					setAddressLine(null);
+				}
+			})
+			.catch(err => {
+				console.warn(err);
+				setAddressLine(null);
+			});
+		setLatHemisphere(position.coords.latitude >= 0 ? 'N' : 'S');
+		setLonHemisphere(position.coords.longitude >= 0 ? 'E' : 'W');
+		setAltitude(position.coords.altitude ?? 0);
+		setAltitudeAccuracy(position.coords.altitudeAccuracy ?? null);
+		setAccuracy(position.coords.accuracy ?? 0);
+		// @ts-ignore
+		setSatelliteCount(position.extras.satellites || -1);
+		// @ts-ignore
+		if (position.extras.satellitesView !== undefined) setSatelliteCount(`${position.extras.satellites} (${position.extras.satellitesView})`);
+	};
+
 	useEffect(() => {
 		const watchId = Geolocation.watchPosition(
-			position => {
-				const date = new Date(position.timestamp);
-				const hours = date.getHours().toString().padStart(2, '0');
-				const minutes = date.getMinutes().toString().padStart(2, '0');
-				const seconds = date.getSeconds().toString().padStart(2, '0');
-				setTime(`${hours}:${minutes}:${seconds}`);
-				setSpeed(position.coords.speed ?? 0);
-				setLatitude(parseRadius(position.coords.latitude));
-				setLongitude(parseRadius(position.coords.longitude));
-				reverseGeocodeLocation({
-					latitude: position.coords.latitude,
-					longitude: position.coords.longitude,
-				})
-					.then(res => {
-						if (Platform.OS === 'android') {
-							if (res.addressLine && res.locality) {
-								// If locality appears multiple times in addressLine, remove all but the last occurrence
-								if (res.addressLine.indexOf(res.locality) !== res.addressLine.lastIndexOf(res.locality)) {
-									const parts = res.addressLine.split(res.locality);
-									// Remove empty parts and join the rest
-									setAddressLine(
-										parts
-											.filter((part: string) => part.trim() !== '')
-											.join(res.locality)
-											.trim(),
-									);
-								} else {
-									setAddressLine(res.addressLine);
-								}
-							} else if (res.addressLine) {
-								setAddressLine(res.addressLine);
-							} else if (res.locality) {
-								setAddressLine(res.locality);
-							}
-						} else if (Platform.OS === 'ios') {
-							const parts = [];
-							if (res.name) parts.push(res.name);
-							if (res.locality) parts.push(res.locality);
-							if (res.administrativeArea && res.administrativeArea !== res.locality) parts.push(res.administrativeArea);
-							if (res.country) parts.push(res.country);
-							if (parts.length > 0) {
-								setAddressLine(parts.join(', '));
-							}
-						} else {
-							setAddressLine(null);
-						}
-					})
-					.catch(err => {
-						console.warn(err);
-						setAddressLine(null);
-					});
-				setLatHemisphere(position.coords.latitude >= 0 ? 'N' : 'S');
-				setLonHemisphere(position.coords.longitude >= 0 ? 'E' : 'W');
-				setAltitude(position.coords.altitude ?? 0);
-				setAltitudeAccuracy(position.coords.altitudeAccuracy ?? null);
-				setAccuracy(position.coords.accuracy ?? 0);
-				// @ts-ignore
-				setSatelliteCount(position.extras.satellites || -1);
-				// @ts-ignore
-				if (position.extras.satellitesView !== undefined) setSatelliteCount(`${position.extras.satellites} (${position.extras.satellitesView})`);
-			},
-			error => {
-				console.warn(error);
-			},
+			position => processGeolocation(position),
+			error => console.warn('[GPS] Failed to get position: ', error),
 			{
 				enableHighAccuracy: true,
 				interval: 200,
-				maximumAge: 1000,
+				maximumAge: 100,
 				distanceFilter: 0,
 			},
 		);
+
 		return () => Geolocation.clearWatch(watchId);
-	}, [unit]);
+	}, []);
+
+	useEffect(() => {
+		const intervalId = setInterval(() => {
+			console.warn('Geolocation data expired, using NETWORK provider.');
+			Geolocation.getCurrentPosition(
+				position => processGeolocation(position),
+				error => console.warn('[NETWORK] Failed to get position: ', error),
+				{
+					enableHighAccuracy: false,
+					maximumAge: 5 * 1000,
+					distanceFilter: 0,
+				},
+			);
+		}, 10 * 1000);
+
+		return () => clearInterval(intervalId);
+	}, [lastUpdateTs]);
 
 	return (
 		<View
