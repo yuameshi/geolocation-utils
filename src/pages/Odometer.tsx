@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Icon, Surface, Text, useTheme } from 'react-native-paper';
 import { Platform, StyleSheet, ToastAndroid, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { reverseGeocodeLocation } from 'react-native-geocoder-sdk';
 import Geolocation from '@react-native-community/geolocation';
 import CompassHeading from 'react-native-compass-heading';
 import { accelerometer, gravity, SensorTypes, setUpdateIntervalForType } from 'react-native-sensors';
@@ -24,6 +25,7 @@ export const Odometer = () => {
 	const [longitude, setLongitude] = useState('0 0\' 0.0"');
 	const [latHemisphere, setLatHemisphere] = useState<'N' | 'S'>('N');
 	const [lonHemisphere, setLonHemisphere] = useState<'E' | 'W'>('E');
+	const [addressLine, setAddressLine] = useState<string | null>(null);
 	const [accuracy, setAccuracy] = useState(0);
 	const [altitude, setAltitude] = useState(0);
 	const [altitudeAccuracy, setAltitudeAccuracy] = useState<number | null>(null);
@@ -98,6 +100,48 @@ export const Odometer = () => {
 				setSpeed(position.coords.speed ?? 0);
 				setLatitude(parseRadius(position.coords.latitude));
 				setLongitude(parseRadius(position.coords.longitude));
+				reverseGeocodeLocation({
+					latitude: position.coords.latitude,
+					longitude: position.coords.longitude,
+				})
+					.then(res => {
+						if (Platform.OS === 'android') {
+							if (res.addressLine && res.locality) {
+								// If locality appears multiple times in addressLine, remove all but the last occurrence
+								if (res.addressLine.indexOf(res.locality) !== res.addressLine.lastIndexOf(res.locality)) {
+									const parts = res.addressLine.split(res.locality);
+									// Remove empty parts and join the rest
+									setAddressLine(
+										parts
+											.filter((part: string) => part.trim() !== '')
+											.join(res.locality)
+											.trim(),
+									);
+								} else {
+									setAddressLine(res.addressLine);
+								}
+							} else if (res.addressLine) {
+								setAddressLine(res.addressLine);
+							} else if (res.locality) {
+								setAddressLine(res.locality);
+							}
+						} else if (Platform.OS === 'ios') {
+							const parts = [];
+							if (res.name) parts.push(res.name);
+							if (res.locality) parts.push(res.locality);
+							if (res.administrativeArea && res.administrativeArea !== res.locality) parts.push(res.administrativeArea);
+							if (res.country) parts.push(res.country);
+							if (parts.length > 0) {
+								setAddressLine(parts.join(', '));
+							}
+						} else {
+							setAddressLine(null);
+						}
+					})
+					.catch(err => {
+						console.warn(err);
+						setAddressLine(null);
+					});
 				setLatHemisphere(position.coords.latitude >= 0 ? 'N' : 'S');
 				setLonHemisphere(position.coords.longitude >= 0 ? 'E' : 'W');
 				setAltitude(position.coords.altitude ?? 0);
@@ -205,7 +249,7 @@ export const Odometer = () => {
 							{longitude} {lonHemisphere}
 						</Text>
 					</View>
-					{/*
+					{addressLine && (
 						<View style={styles.addressRow}>
 							<View style={styles.addressIcon}>
 								<Icon
@@ -213,9 +257,9 @@ export const Odometer = () => {
 									size={18}
 								/>
 							</View>
-							<Text style={styles.addressText}>东莞市XX镇XX街道</Text>
+							<Text style={styles.addressText}>{addressLine}</Text>
 						</View>
-						*/}
+					)}
 				</Surface>
 
 				{/* Right column */}
