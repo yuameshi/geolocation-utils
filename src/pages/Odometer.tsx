@@ -349,10 +349,9 @@ const styles = StyleSheet.create({
 	},
 	centerTile: {
 		flex: 2,
-		marginHorizontal: 12,
+		margin: 0,
 		borderRadius: 16,
-		paddingVertical: 20,
-		paddingHorizontal: 16,
+		padding: 0,
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
