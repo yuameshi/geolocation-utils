@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon, Surface, Text, useTheme } from 'react-native-paper';
-import { StyleSheet, ToastAndroid, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Platform, StyleSheet, ToastAndroid, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Geolocation from '@react-native-community/geolocation';
 import CompassHeading from 'react-native-compass-heading';
-import { accelerometer, SensorTypes, setUpdateIntervalForType } from 'react-native-sensors';
+import { accelerometer, gravity, SensorTypes, setUpdateIntervalForType } from 'react-native-sensors';
 import { UnitAdapter } from '../utils/unit-adapter';
 import { parseRadius } from '../utils/parse-radius';
 
@@ -18,8 +18,8 @@ export const Odometer = () => {
 
 	const [time, setTime] = useState('00:00:00');
 	const [speed, setSpeed] = useState(0);
-	const gravity = useRef({ x: 0, y: 0, z: 0 });
-	const [acceleratedSpeed, setAcceleratedSpeed] = useState(0);
+	const gravityRef = useRef({ x: 0, y: 0, z: 0 });
+	const [accelerationMagnitude, setAcceleratedMagnitude] = useState(0);
 	const [latitude, setLatitude] = useState('0 0\' 0.0"');
 	const [longitude, setLongitude] = useState('0 0\' 0.0"');
 	const [latHemisphere, setLatHemisphere] = useState<'N' | 'S'>('N');
@@ -52,24 +52,31 @@ export const Odometer = () => {
 	}, []);
 
 	useEffect(() => {
-		setUpdateIntervalForType(SensorTypes.accelerometer, 50); // 20 Hz
+		// 20 Hz update rate (50 ms interval）
+		setUpdateIntervalForType(SensorTypes.accelerometer, 50);
+		setUpdateIntervalForType(SensorTypes.gravity, 50);
 		const alpha = 0.9;
-		const subscription = accelerometer.subscribe(({ x, y, z }) => {
-			// gravity filter
-			gravity.current.x = alpha * gravity.current.x + (1 - alpha) * x;
-			gravity.current.y = alpha * gravity.current.y + (1 - alpha) * y;
-			gravity.current.z = alpha * gravity.current.z + (1 - alpha) * z;
-
-			const linear = {
-				x: x - gravity.current.x,
-				y: y - gravity.current.y,
-				z: z - gravity.current.z,
-			};
-
-			setAcceleratedSpeed(linear.x * linear.x + linear.y * linear.y + linear.z * linear.z);
+		const gravitySub = gravity.subscribe(({ x, y, z }) => {
+			gravityRef.current.x = alpha * gravityRef.current.x + (1 - alpha) * x;
+			gravityRef.current.y = alpha * gravityRef.current.y + (1 - alpha) * y;
+			gravityRef.current.z = alpha * gravityRef.current.z + (1 - alpha) * z;
 		});
 
-		return () => subscription.unsubscribe();
+		const accelerometerSub = accelerometer.subscribe(({ x, y, z }) => {
+			const linearAccelerationX = x - gravityRef.current.x;
+			const linearAccelerationY = y - gravityRef.current.y;
+			const linearAccelerationZ = z - gravityRef.current.z;
+
+			const magnitude = Math.sqrt(linearAccelerationX * linearAccelerationX + linearAccelerationY * linearAccelerationY + linearAccelerationZ * linearAccelerationZ);
+			const linearAcceleration = Platform.OS === 'ios' ? magnitude * 9.80665 : magnitude;
+
+			setAcceleratedMagnitude(Math.max(0, linearAcceleration - 0.1)); // Subtracting a small threshold to filter out noise
+		});
+
+		return () => {
+			gravitySub.unsubscribe();
+			accelerometerSub.unsubscribe();
+		};
 	}, []);
 
 	useEffect(() => {
@@ -186,7 +193,7 @@ export const Odometer = () => {
 						</Text>
 						<Text style={styles.coordinatesSeparator}>·</Text>
 						<Text style={[styles.coordinates, styles.coordinatesRight]}>
-							{UnitAdapter[unit].acceleratedSpeed(acceleratedSpeed).toFixed(1)} {UnitAdapter[unit].units.acceleratedSpeed}
+							{UnitAdapter[unit].acceleratedSpeed(accelerationMagnitude).toFixed(1)} {UnitAdapter[unit].units.acceleratedSpeed}
 						</Text>
 					</View>
 					<View style={styles.coordinatesContainer}>
