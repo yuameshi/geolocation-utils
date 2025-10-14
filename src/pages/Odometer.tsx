@@ -292,7 +292,7 @@ export const Odometer = () => {
 								)}
 							</>
 						) : (
-							<Text style={styles.locationHidden}>LOCATION HIDDEN</Text>
+							<Text style={[styles.locationHidden, addressLine && styles.locationHiddenWithAddress]}>LOCATION HIDDEN</Text>
 						)}
 					</TouchableOpacity>
 				</Surface>
@@ -459,5 +459,9 @@ const styles = StyleSheet.create({
 		opacity: 0.4,
 		letterSpacing: 4,
 		textTransform: 'uppercase',
+	},
+	locationHiddenWithAddress: {
+		marginVertical: 10,
+		lineHeight: 40,
 	},
 });
