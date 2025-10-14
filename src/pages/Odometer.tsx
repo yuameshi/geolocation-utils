@@ -11,6 +11,7 @@ import { Altitude } from '@page-components/Odometer/Tiles/Altitude';
 import { Accuracy } from '@page-components/Odometer/Tiles/Accuracy';
 import { Satellites } from '@page-components/Odometer/Tiles/Satellites';
 import { Accelerometer } from '@components/pages/Odometer/Accelerometer';
+import Speed from '@components/pages/Odometer/Speed';
 
 export const Odometer = () => {
 	const verticalLayout = useVerticalLayout();
@@ -142,7 +143,10 @@ export const Odometer = () => {
 						style={styles.speedContainer}
 						onPress={() => setUnit(unit === 'Metric' ? 'Imperial' : 'Metric')}
 					>
-						<Text style={styles.speed}>{speed === null ? '--.--' : UnitAdapter[unit].speed(speed).toFixed(1)}</Text>
+						<Speed
+							unit={unit}
+							speed={speed}
+						/>
 						<Text style={styles.unit}>{UnitAdapter[unit].units.speed}</Text>
 					</TouchableOpacity>
 					<View style={styles.coordinatesContainer}>
@@ -223,11 +227,6 @@ const styles = StyleSheet.create({
 	},
 	speedContainer: {
 		alignItems: 'center',
-	},
-	speed: {
-		fontSize: 72,
-		fontWeight: '800',
-		lineHeight: 80,
 	},
 	unit: {
 		fontSize: 16,
