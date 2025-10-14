@@ -21,11 +21,11 @@ export const Odometer = () => {
 
 	const [time, setTime] = useState('00:00:00');
 	const [lastUpdateTs, setLastUpdateTs] = useState(0);
-	const [speed, setSpeed] = useState(0);
-	const [latitude, setLatitude] = useState(0.0);
-	const [longitude, setLongitude] = useState(0);
-	const [accuracy, setAccuracy] = useState(0);
-	const [altitude, setAltitude] = useState(0);
+	const [speed, setSpeed] = useState<number | null>(null);
+	const [latitude, setLatitude] = useState<number | null>(null);
+	const [longitude, setLongitude] = useState<number | null>(null);
+	const [accuracy, setAccuracy] = useState<number | null>(null);
+	const [altitude, setAltitude] = useState<number | null>(null);
 	const [altitudeAccuracy, setAltitudeAccuracy] = useState<number | null>(null);
 	const [satelliteCount, setSatelliteCount] = useState(0);
 	const [unit, setUnit] = useState<'Metric' | 'Imperial'>('Metric');
@@ -54,12 +54,12 @@ export const Odometer = () => {
 		const minutes = date.getMinutes().toString().padStart(2, '0');
 		const seconds = date.getSeconds().toString().padStart(2, '0');
 		setTime(`${hours}:${minutes}:${seconds}`);
-		setSpeed(position.coords.speed ?? 0);
-		setLatitude(position.coords.latitude);
-		setLongitude(position.coords.longitude);
-		setAltitude(position.coords.altitude ?? 0);
-		setAltitudeAccuracy(position.coords.altitudeAccuracy ?? null);
-		setAccuracy(position.coords.accuracy ?? 0);
+		setSpeed(position.coords.speed || null);
+		setLatitude(position.coords.latitude || null);
+		setLongitude(position.coords.longitude || null);
+		setAltitude(position.coords.altitude || null);
+		setAltitudeAccuracy(position.coords.altitudeAccuracy || null);
+		setAccuracy(position.coords.accuracy || null);
 		// @ts-ignore
 		setSatelliteCount(position.extras.satellites || 0);
 		// @ts-ignore
@@ -131,15 +131,19 @@ export const Odometer = () => {
 						style={styles.speedContainer}
 						onPress={() => setUnit(unit === 'Metric' ? 'Imperial' : 'Metric')}
 					>
-						<Text style={styles.speed}>{UnitAdapter[unit].speed(speed).toFixed(1)}</Text>
+						<Text style={styles.speed}>{speed === null ? '--.--' : UnitAdapter[unit].speed(speed).toFixed(1)}</Text>
 						<Text style={styles.unit}>{UnitAdapter[unit].units.speed}</Text>
 					</TouchableOpacity>
 					<View style={styles.coordinatesContainer}>
-						<Text style={styles.coordinates}>
-							{UnitAdapter[unit].speedLite(speed).toFixed(1)} {UnitAdapter[unit].units.speedLite}
-						</Text>
-						<Text style={styles.coordinatesSeparator}>·</Text>
-						<Text style={[styles.coordinates, styles.coordinatesRight]}>
+						{speed !== null && (
+							<>
+								<Text style={styles.coordinates}>
+									{UnitAdapter[unit].speedLite(speed).toFixed(1)} {UnitAdapter[unit].units.speedLite}
+								</Text>
+								<Text style={styles.coordinatesSeparator}>·</Text>
+							</>
+						)}
+						<Text style={[styles.coordinates, speed ? styles.coordinatesRight : styles.exclusiveCoordinates]}>
 							<Accelerometer unit={unit} />
 						</Text>
 					</View>
@@ -241,5 +245,8 @@ const styles = StyleSheet.create({
 	},
 	coordinatesRight: {
 		textAlign: 'left',
+	},
+	exclusiveCoordinates: {
+		textAlign: 'center',
 	},
 });

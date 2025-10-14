@@ -5,7 +5,7 @@ import { styles } from './styles';
 import { useVerticalLayout } from '@hooks/useVerticalLayout';
 
 type Props = {
-	altitude: number;
+	altitude: number | null;
 	altitudeAccuracy: number | null;
 	unit: 'Metric' | 'Imperial';
 };
@@ -24,7 +24,7 @@ export const Altitude: FC<Props> = ({ altitude, altitudeAccuracy, unit }) => {
 			/>
 			<Text style={styles.label}>Altitude</Text>
 			<Text style={styles.value}>
-				{UnitAdapter[unit].altitude(altitude).toFixed(1)}
+				{altitude === null ? '-.-' : UnitAdapter[unit].altitude(altitude).toFixed(1)}
 				{altitudeAccuracy && <> ± {UnitAdapter[unit].altitude(altitudeAccuracy).toFixed(1)}</>}
 			</Text>
 			<Text style={styles.hint}>{UnitAdapter[unit].units.altitude}</Text>

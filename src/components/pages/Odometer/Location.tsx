@@ -5,8 +5,8 @@ import { Icon, Text } from 'react-native-paper';
 import { parseRadius } from '@utils/parse-radius';
 
 type LocationProps = {
-	latitude: number;
-	longitude: number;
+	latitude: number | null;
+	longitude: number | null;
 };
 
 export const Location: FC<LocationProps> = ({ latitude, longitude }) => {
@@ -17,6 +17,10 @@ export const Location: FC<LocationProps> = ({ latitude, longitude }) => {
 	const [addressLine, setAddressLine] = useState<string | null>(null);
 
 	useEffect(() => {
+		if (latitude === null || longitude === null) {
+			setAddressLine(null);
+			return;
+		}
 		reverseGeocodeLocation({ latitude, longitude })
 			.then(res => {
 				console.log('Geocoder result:', res);
@@ -87,10 +91,14 @@ export const Location: FC<LocationProps> = ({ latitude, longitude }) => {
 			});
 	}, [longitude, latitude, showLocation]);
 
+	if (longitude === null || latitude === null) {
+		return <Text style={styles.hint}>LOCATION UNAVAILABLE</Text>;
+	}
+
 	return (
 		<TouchableOpacity
 			style={styles.container}
-			onPress={() => setShowLocation(prev => (prev + 1) % 3)}
+			onPress={() => latitude !== null && longitude !== null && setShowLocation(prev => (prev + 1) % 3)}
 		>
 			{showLocation % 3 !== 2 ? (
 				<>
@@ -116,7 +124,7 @@ export const Location: FC<LocationProps> = ({ latitude, longitude }) => {
 					)}
 				</>
 			) : (
-				<Text style={[styles.locationHidden, addressLine && styles.locationHiddenWithAddress]}>LOCATION HIDDEN</Text>
+				<Text style={[styles.hint, addressLine && styles.hintLg]}>LOCATION HIDDEN</Text>
 			)}
 		</TouchableOpacity>
 	);
@@ -160,7 +168,7 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		opacity: 0.9,
 	},
-	locationHidden: {
+	hint: {
 		marginTop: 10,
 		fontSize: 16,
 		fontWeight: 'bold',
@@ -168,7 +176,7 @@ const styles = StyleSheet.create({
 		letterSpacing: 4,
 		textTransform: 'uppercase',
 	},
-	locationHiddenWithAddress: {
+	hintLg: {
 		marginVertical: 10,
 		lineHeight: 40,
 	},

@@ -5,7 +5,7 @@ import { styles } from './styles';
 import { useVerticalLayout } from '@hooks/useVerticalLayout';
 
 type Props = {
-	accuracy: number;
+	accuracy: number | null;
 	unit: 'Metric' | 'Imperial';
 };
 
@@ -17,7 +17,7 @@ export const Accuracy: FC<Props> = ({ accuracy, unit }) => {
 			style={[styles.tile, verticalLayout ? styles.tileVertical : undefined]}
 			elevation={0}
 		>
-			{accuracy >= 25 ? (
+			{(accuracy || Infinity) >= 25 ? (
 				<Icon
 					source={'crosshairs'}
 					size={24}
@@ -29,7 +29,7 @@ export const Accuracy: FC<Props> = ({ accuracy, unit }) => {
 				/>
 			)}
 			<Text style={styles.label}>Accuracy</Text>
-			<Text style={styles.value}>{UnitAdapter[unit].accuracy(accuracy).toFixed(1)}</Text>
+			<Text style={styles.value}>{accuracy === null ? '-.-' : UnitAdapter[unit].accuracy(accuracy).toFixed(1)}</Text>
 			<Text style={styles.hint}>{UnitAdapter[unit].units.accuracy}</Text>
 		</Surface>
 	);
