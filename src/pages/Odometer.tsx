@@ -86,7 +86,18 @@ export const Odometer = () => {
 			console.warn('Geolocation data expired, using NETWORK provider.');
 			Geolocation.getCurrentPosition(
 				position => processGeolocation(position),
-				error => console.warn('[NETWORK] Failed to get position: ', error),
+				error => {
+					console.warn('[NETWORK] Failed to get position: ', error);
+					console.warn('Last position update was at ', new Date(lastUpdateTs).toLocaleTimeString());
+					console.warn('Cleaning up location data...');
+					setSpeed(null);
+					setLatitude(null);
+					setLongitude(null);
+					setAltitude(null);
+					setAltitudeAccuracy(null);
+					setAccuracy(null);
+					setSatelliteCount(0);
+				},
 				{
 					enableHighAccuracy: false,
 					maximumAge: 5 * 1000,
