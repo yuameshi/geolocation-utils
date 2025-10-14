@@ -1,5 +1,14 @@
 {
 	"extends": "@react-native/typescript-config",
 	"include": ["**/*.ts", "**/*.tsx"],
-	"exclude": ["**/node_modules", "**/Pods"]
+	"exclude": ["**/node_modules", "**/Pods"],
+	"compilerOptions": {
+		"paths": {
+			"@components/*": ["./src/components/*"],
+			"@page-components/*": ["./src/components/pages/*"],
+			"@hooks/*": ["./src/hooks/*"],
+			"@utils/*": ["./src/utils/*"],
+			"@/*": ["./src/*"]
+		}
+	}
 }
