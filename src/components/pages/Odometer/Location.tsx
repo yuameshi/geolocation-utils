@@ -23,7 +23,6 @@ export const Location: FC<LocationProps> = ({ latitude, longitude }) => {
 		}
 		reverseGeocodeLocation({ latitude, longitude })
 			.then(res => {
-				console.log('Geocoder result:', res);
 				if (Platform.OS === 'android') {
 					if (showLocation % 3 === 0 || showLocation % 3 === 2) {
 						// add mode%3 === 2 to prevent text switch behind state changed
@@ -86,7 +85,7 @@ export const Location: FC<LocationProps> = ({ latitude, longitude }) => {
 				}
 			})
 			.catch(err => {
-				console.warn(err);
+				console.warn('Geocoder failed', err);
 				setAddressLine(null);
 			});
 	}, [longitude, latitude, showLocation]);
