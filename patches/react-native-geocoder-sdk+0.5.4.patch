@@ -1,0 +1,15 @@
+diff --git a/node_modules/react-native-geocoder-sdk/android/src/main/java/com/geocodersdk/GeocoderSdkModule.kt b/node_modules/react-native-geocoder-sdk/android/src/main/java/com/geocodersdk/GeocoderSdkModule.kt
+index e0a7b97..b5b0ca3 100644
+--- a/node_modules/react-native-geocoder-sdk/android/src/main/java/com/geocodersdk/GeocoderSdkModule.kt
++++ b/node_modules/react-native-geocoder-sdk/android/src/main/java/com/geocodersdk/GeocoderSdkModule.kt
+@@ -25,7 +25,10 @@ class GeocoderSdkModule internal constructor(context: ReactApplicationContext) :
+ 
+                 val writableMap = WritableNativeMap()
+                 writableMap.putString("addressLine", address.getAddressLine(0))
++                writableMap.putString("adminArea", address.getAdminArea())
++                writableMap.putString("subAdminArea", address.getSubAdminArea())
+                 writableMap.putString("locality", address.locality)
++                writableMap.putString("subLocality", address.getSubLocality())
+                 writableMap.putString("countryName", address.countryName)
+                 writableMap.putString("countryCode", address.countryCode)
+ 
