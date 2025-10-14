@@ -54,12 +54,12 @@ export const Odometer = () => {
 		const minutes = date.getMinutes().toString().padStart(2, '0');
 		const seconds = date.getSeconds().toString().padStart(2, '0');
 		setTime(`${hours}:${minutes}:${seconds}`);
-		setSpeed(position.coords.speed || null);
-		setLatitude(position.coords.latitude || null);
-		setLongitude(position.coords.longitude || null);
-		setAltitude(position.coords.altitude || null);
-		setAltitudeAccuracy(position.coords.altitudeAccuracy || null);
-		setAccuracy(position.coords.accuracy || null);
+		setSpeed(position.coords.speed ?? null);
+		setLatitude(position.coords.latitude ?? null);
+		setLongitude(position.coords.longitude ?? null);
+		setAltitude(position.coords.altitude ?? null);
+		setAltitudeAccuracy(position.coords.altitudeAccuracy ?? null);
+		setAccuracy(position.coords.accuracy ?? null);
 		// @ts-ignore
 		setSatelliteCount(position.extras.satellites || 0);
 		// @ts-ignore
