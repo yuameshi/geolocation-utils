@@ -31,7 +31,7 @@ export const Odometer = () => {
 	const [accuracy, setAccuracy] = useState(0);
 	const [altitude, setAltitude] = useState(0);
 	const [altitudeAccuracy, setAltitudeAccuracy] = useState<number | null>(null);
-	const [satelliteCount, setSatelliteCount] = useState(-1);
+	const [satelliteCount, setSatelliteCount] = useState(0);
 	const [unit, setUnit] = useState<'Metric' | 'Imperial'>('Metric');
 	const [heading, setHeading] = useState(0);
 	const headingDeg = Math.round((heading || 0) % 360);
@@ -149,7 +149,7 @@ export const Odometer = () => {
 		setAltitudeAccuracy(position.coords.altitudeAccuracy ?? null);
 		setAccuracy(position.coords.accuracy ?? 0);
 		// @ts-ignore
-		setSatelliteCount(position.extras.satellites || -1);
+		setSatelliteCount(position.extras.satellites || 0);
 		// @ts-ignore
 		if (position.extras.satellitesView !== undefined) setSatelliteCount(`${position.extras.satellites} (${position.extras.satellitesView})`);
 	};
@@ -218,7 +218,7 @@ export const Odometer = () => {
 						style={[styles.tile, useVerticalLayout ? styles.tileVertical : undefined]}
 						elevation={0}
 					>
-						{accuracy > 30 ? (
+						{accuracy >= 25 ? (
 							<Icon
 								source={'crosshairs'}
 								size={24}
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
 		paddingVertical: 12,
 	},
 	sideColumn: {
-		flex: 1,
+		flex: 0.5,
 		justifyContent: 'space-between',
 	},
 	sideColumnVertical: {
