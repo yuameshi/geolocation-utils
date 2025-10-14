@@ -7,7 +7,9 @@
 		"ios": "react-native run-ios",
 		"lint": "eslint .",
 		"start": "react-native start",
-		"test": "jest"
+		"test": "jest",
+		"preinstall": "npx only-allow npm",
+		"postinstall": "npx patch-package"
 	},
 	"dependencies": {
 		"@react-native-community/geolocation": "^3.4.0",
@@ -37,6 +39,7 @@
 		"babel-plugin-module-resolver": "^5.0.2",
 		"eslint": "^8.19.0",
 		"jest": "^29.6.3",
+		"only-allow": "^1.2.1",
 		"patch-package": "^8.0.1",
 		"prettier": "2.8.8",
 		"react-test-renderer": "19.1.1",
