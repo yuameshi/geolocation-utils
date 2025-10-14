@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon, Surface, Text, useTheme } from 'react-native-paper';
-import { Platform, StyleSheet, ToastAndroid, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Platform, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { reverseGeocodeLocation } from 'react-native-geocoder-sdk';
 import Geolocation, { type GeolocationResponse } from '@react-native-community/geolocation';
@@ -22,11 +22,12 @@ export const Odometer = () => {
 	const [speed, setSpeed] = useState(0);
 	const gravityRef = useRef({ x: 0, y: 0, z: 0 });
 	const [accelerationMagnitude, setAcceleratedMagnitude] = useState(0);
-	const [showLocation, setShowLocation] = useState(true);
-	const [latitude, setLatitude] = useState('0 0\' 0.0"');
-	const [longitude, setLongitude] = useState('0 0\' 0.0"');
-	const [latHemisphere, setLatHemisphere] = useState<'N' | 'S'>('N');
-	const [lonHemisphere, setLonHemisphere] = useState<'E' | 'W'>('E');
+	// %=0: Admin Area (Thoroughfare if available)
+	// %=1: Feature Name
+	// %=2: Hide
+	const [showLocation, setShowLocation] = useState(0);
+	const [latitude, setLatitude] = useState(0.0);
+	const [longitude, setLongitude] = useState(0);
 	const [addressLine, setAddressLine] = useState<string | null>(null);
 	const [accuracy, setAccuracy] = useState(0);
 	const [altitude, setAltitude] = useState(0);
@@ -99,39 +100,75 @@ export const Odometer = () => {
 		const seconds = date.getSeconds().toString().padStart(2, '0');
 		setTime(`${hours}:${minutes}:${seconds}`);
 		setSpeed(position.coords.speed ?? 0);
-		setLatitude(parseRadius(position.coords.latitude));
-		setLongitude(parseRadius(position.coords.longitude));
-		reverseGeocodeLocation({
-			latitude: position.coords.latitude,
-			longitude: position.coords.longitude,
-		})
+		setLatitude(position.coords.latitude);
+		setLongitude(position.coords.longitude);
+		setAltitude(position.coords.altitude ?? 0);
+		setAltitudeAccuracy(position.coords.altitudeAccuracy ?? null);
+		setAccuracy(position.coords.accuracy ?? 0);
+		// @ts-ignore
+		setSatelliteCount(position.extras.satellites || 0);
+		// @ts-ignore
+		if (position.extras.satellitesView !== undefined) setSatelliteCount(`${position.extras.satellites} (${position.extras.satellitesView})`);
+	};
+
+	useEffect(() => {
+		reverseGeocodeLocation({ latitude, longitude })
 			.then(res => {
+				console.log('Geocoder result:', res);
 				if (Platform.OS === 'android') {
-					if (res.addressLine && res.locality) {
-						// If locality appears multiple times in addressLine, remove all but the last occurrence
-						if (res.addressLine.indexOf(res.locality) !== res.addressLine.lastIndexOf(res.locality)) {
-							const parts = res.addressLine.split(res.locality);
-							// Remove empty parts and join the rest
-							setAddressLine(
-								parts
-									.filter((part: string) => part.trim() !== '')
-									.join(res.locality)
-									.trim(),
-							);
+					if (showLocation % 3 === 0 || showLocation % 3 === 2) {
+						// add mode%3 === 2 to prevent text switch behind state changed
+						// 0: Thoroughfare + Admin Area + Locality + Country
+						const parts = [];
+						if (res.subThoroughfare) parts.push(res.subThoroughfare);
+						if (res.thoroughfare) parts.push(res.thoroughfare);
+						if (res.locality && res.locality !== res.adminArea) parts.push(res.locality);
+						if (res.adminArea) parts.push(res.adminArea);
+						if (res.countryName || res.countryCode) parts.push(res.countryName || res.countryCode || '');
+						const address = parts.filter(p => p && p.length > 0).join(', ');
+						if (address.length > 0) {
+							setAddressLine(parts.filter(p => p && p.length > 0).join(', '));
 						} else {
-							setAddressLine(res.addressLine);
+							if (res.featureName && res.addressLine) {
+								setAddressLine(res.addressLine.replace(res.featureName, '').replace(/^[, ]+|[, ]+$/g, ''));
+							} else {
+								setAddressLine(res.addressLine || null);
+							}
 						}
-					} else if (res.addressLine) {
-						setAddressLine(res.addressLine);
-					} else if (res.locality) {
-						setAddressLine(res.locality);
+					} else if (showLocation % 3 === 1) {
+						// 1: Feature Name
+						if (res.featureName) setAddressLine(res.featureName);
+						else if (res.addressLine) {
+							// remove thoroughfare/adminArea/locality/country from addressLine
+							const address = res.addressLine;
+							let toRemove = [];
+							if (res.thoroughfare) toRemove.push(res.thoroughfare);
+							if (res.adminArea) toRemove.push(res.adminArea);
+							if (res.locality) toRemove.push(res.locality);
+							if (res.countryCode) toRemove.push(res.countryCode);
+							if (res.countryName) toRemove.push(res.countryName);
+							toRemove = toRemove.filter(p => p && p.length > 0);
+							let modifiedAddress = address;
+							toRemove.forEach(part => {
+								const regex = new RegExp(part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+								modifiedAddress = modifiedAddress.replace(regex, '');
+							});
+							modifiedAddress = modifiedAddress.replace(/^[, ]+|[, ]+$/g, '').replace(/[, ]+/g, ' ');
+							if (modifiedAddress.length > 0) {
+								setAddressLine(modifiedAddress);
+							} else {
+								setAddressLine(res.addressLine || null);
+							}
+						}
 					}
 				} else if (Platform.OS === 'ios') {
 					const parts = [];
 					if (res.name) parts.push(res.name);
-					if (res.locality) parts.push(res.locality);
-					if (res.administrativeArea && res.administrativeArea !== res.locality) parts.push(res.administrativeArea);
-					if (res.country) parts.push(res.country);
+					else {
+						if (res.locality) parts.push(res.locality);
+						if (res.administrativeArea && res.administrativeArea !== res.locality) parts.push(res.administrativeArea);
+						if (res.country) parts.push(res.country);
+					}
 					if (parts.length > 0) {
 						setAddressLine(parts.join(', '));
 					}
@@ -143,16 +180,7 @@ export const Odometer = () => {
 				console.warn(err);
 				setAddressLine(null);
 			});
-		setLatHemisphere(position.coords.latitude >= 0 ? 'N' : 'S');
-		setLonHemisphere(position.coords.longitude >= 0 ? 'E' : 'W');
-		setAltitude(position.coords.altitude ?? 0);
-		setAltitudeAccuracy(position.coords.altitudeAccuracy ?? null);
-		setAccuracy(position.coords.accuracy ?? 0);
-		// @ts-ignore
-		setSatelliteCount(position.extras.satellites || 0);
-		// @ts-ignore
-		if (position.extras.satellitesView !== undefined) setSatelliteCount(`${position.extras.satellites} (${position.extras.satellitesView})`);
-	};
+	}, [longitude, latitude, showLocation]);
 
 	useEffect(() => {
 		const watchId = Geolocation.watchPosition(
@@ -243,11 +271,7 @@ export const Odometer = () => {
 					<Text style={styles.time}>{time}</Text>
 					<TouchableOpacity
 						style={styles.speedContainer}
-						onPress={() => {
-							const target = unit === 'Metric' ? 'Imperial' : 'Metric';
-							ToastAndroid.show(`Switched to ${target} units`, ToastAndroid.SHORT);
-							setUnit(target);
-						}}
+						onPress={() => setUnit(unit === 'Metric' ? 'Imperial' : 'Metric')}
 					>
 						<Text style={styles.speed}>{UnitAdapter[unit].speed(speed).toFixed(1)}</Text>
 						<Text style={styles.unit}>{UnitAdapter[unit].units.speed}</Text>
@@ -263,27 +287,24 @@ export const Odometer = () => {
 					</View>
 					<TouchableOpacity
 						style={styles.speedContainer}
-						onPress={() => {
-							setShowLocation(!showLocation);
-							ToastAndroid.show(!showLocation ? 'Showing coordinates/location' : 'Hiding coordinates/location', ToastAndroid.SHORT);
-						}}
+						onPress={() => setShowLocation(prev => (prev + 1) % 3)}
 					>
-						{showLocation ? (
+						{showLocation % 3 !== 2 ? (
 							<>
 								<View style={styles.coordinatesContainer}>
 									<Text style={styles.coordinates}>
-										{latitude} {latHemisphere}
+										{parseRadius(latitude)} {latitude >= 0 ? 'N' : 'S'}
 									</Text>
 									<Text style={styles.coordinatesSeparator}>·</Text>
 									<Text style={[styles.coordinates, styles.coordinatesRight]}>
-										{longitude} {lonHemisphere}
+										{parseRadius(longitude)} {longitude >= 0 ? 'E' : 'W'}
 									</Text>
 								</View>
 								{addressLine && (
 									<View style={styles.addressRow}>
 										<View style={styles.addressIcon}>
 											<Icon
-												source="map-marker"
+												source={['map-marker-radius', 'map-marker', 'map-marker-radius'][showLocation % 3]}
 												size={18}
 											/>
 										</View>
