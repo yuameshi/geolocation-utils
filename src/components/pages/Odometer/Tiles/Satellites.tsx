@@ -21,7 +21,7 @@ export const Satellites: FC<Props> = ({ count }) => {
 			/>
 			<Text style={styles.label}>Satellites</Text>
 			<Text style={styles.value}>{count}</Text>
-			<Text style={styles.hint}>in view</Text>
+			<Text style={styles.hint}>in use</Text>
 		</Surface>
 	);
 };
