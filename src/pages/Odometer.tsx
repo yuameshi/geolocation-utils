@@ -158,7 +158,7 @@ export const Odometer = () => {
 								<Text style={styles.coordinatesSeparator}>·</Text>
 							</>
 						)}
-						<Text style={[styles.coordinates, speed ? styles.coordinatesRight : styles.exclusiveCoordinates]}>
+						<Text style={[styles.coordinates, speed !== null ? styles.coordinatesRight : styles.exclusiveCoordinates]}>
 							<Accelerometer unit={unit} />
 						</Text>
 					</View>
