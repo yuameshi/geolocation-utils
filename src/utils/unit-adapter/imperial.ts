@@ -22,10 +22,10 @@ export default {
 	accuracy,
 	acceleratedSpeed,
 	units: {
-		accuracy: 'ft.',
-		altitude: 'ft.',
+		accuracy: 'feet',
+		altitude: 'feet',
 		speed: 'mph',
-		speedLite: 'ft/s',
-		acceleratedSpeed: 'ft/s²',
+		speedLite: 'ft./s',
+		acceleratedSpeed: 'ft./s²',
 	},
 };
