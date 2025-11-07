@@ -9,6 +9,7 @@ import { StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Odometer } from './pages/Odometer';
 import { createContext, createElement, useState } from 'react';
+import { Satellites } from './pages/Satellites';
 
 export const RouterContext = createContext<{
 	route: string;
@@ -23,6 +24,7 @@ function App() {
 
 	const routes: { [key: string]: React.ComponentType<any> } = {
 		Odometer: Odometer,
+		Satellites: Satellites,
 	};
 
 	return (
