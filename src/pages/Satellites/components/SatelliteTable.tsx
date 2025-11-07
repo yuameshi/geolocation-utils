@@ -2,27 +2,8 @@
 import type { FC } from 'react';
 import { useTheme, DataTable, Text } from 'react-native-paper';
 import { StyleSheet } from 'react-native';
-
-type Satellite = {
-	svid: number | string;
-	type?: string;
-	snr?: number;
-	frequency?: number;
-	azimuth?: number;
-	elevation?: number;
-	used?: boolean;
-};
-
-const SAT_NAMES: Record<string, string> = {
-	GPS: 'GPS',
-	BEIDOU: 'BeiDou',
-	GLONASS: 'Glonass',
-	GALILEO: 'Galileo',
-	QZSS: 'QZSS',
-	SBAS: 'SBAS',
-	IRNSS: 'IRNSS',
-	UNKNOWN: '???',
-};
+import { Satellite } from '../types';
+import { SAT_NAMES } from '../constants';
 
 export const SatelliteTable: FC<{ satellites: Satellite[] }> = ({ satellites }) => {
 	const theme = useTheme();

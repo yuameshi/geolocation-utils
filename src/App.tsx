@@ -7,8 +7,9 @@
 import { PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
 import { StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Odometer } from './pages/Odometer';
 import { createContext, createElement, useState } from 'react';
+
+import { Odometer } from './pages/Odometer';
 import { Satellites } from './pages/Satellites';
 
 export const RouterContext = createContext<{

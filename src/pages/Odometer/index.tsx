@@ -5,13 +5,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Geolocation, { type GeolocationResponse } from '@react-native-community/geolocation';
 import { UnitAdapter } from '@utils/unit-adapter';
 import { useVerticalLayout } from '@hooks/useVerticalLayout';
-import { Location } from '@page-components/Odometer/Location';
-import { Heading } from '@page-components/Odometer/Tiles/Heading';
-import { Altitude } from '@page-components/Odometer/Tiles/Altitude';
-import { Accuracy } from '@page-components/Odometer/Tiles/Accuracy';
-import { Satellites } from '@page-components/Odometer/Tiles/Satellites';
-import { Accelerometer } from '@components/pages/Odometer/Accelerometer';
-import Speed from '@components/pages/Odometer/Speed';
+import { Location } from './components/Location';
+import { Heading } from './components/Tiles/Heading';
+import { Altitude } from './components/Tiles/Altitude';
+import { Accuracy } from './components/Tiles/Accuracy';
+import { Satellites } from './components/Tiles/Satellites';
+import { Accelerometer } from './components/Accelerometer';
+import Speed from './components/Speed';
 
 export const Odometer = () => {
 	const verticalLayout = useVerticalLayout();

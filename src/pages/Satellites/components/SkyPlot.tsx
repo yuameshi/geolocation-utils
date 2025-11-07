@@ -2,38 +2,8 @@
 import type { FC } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useTheme, Text } from 'react-native-paper';
-
-type Satellite = {
-	svid: number | string;
-	type?: string;
-	snr?: number;
-	frequency?: number;
-	azimuth?: number;
-	elevation?: number;
-	used?: boolean;
-};
-
-const SAT_SYMBOLS: Record<string, string> = {
-	GPS: '●',
-	BEIDOU: '▲',
-	GLONASS: '■',
-	GALILEO: '◆',
-	QZSS: '★',
-	SBAS: '○',
-	IRNSS: '⬢',
-	UNKNOWN: '◇',
-};
-
-const SAT_NAMES: Record<string, string> = {
-	GPS: 'GPS',
-	BEIDOU: 'BeiDou',
-	GLONASS: 'Glonass',
-	GALILEO: 'Galileo',
-	QZSS: 'QZSS',
-	SBAS: 'SBAS',
-	IRNSS: 'IRNSS',
-	UNKNOWN: '???',
-};
+import { Satellite } from '../types';
+import { SAT_SYMBOLS, SAT_NAMES } from '../constants';
 
 export const SatelliteSkyPlot: FC<{ satellites: Satellite[] }> = ({ satellites }) => {
 	const { width, height } = useWindowDimensions();

@@ -5,18 +5,9 @@ import { View, ScrollView } from 'react-native';
 import { Text, useTheme, Surface, Card, Appbar } from 'react-native-paper';
 import { NativeModules } from 'react-native';
 import { RouterContext } from '@/App';
-import { SatelliteSkyPlot } from '@components/pages/Satellites/SkyPlot';
-import { SatelliteTable } from '@components/pages/Satellites/SatelliteTable';
-
-type Satellite = {
-	svid: number | string;
-	type?: string;
-	snr?: number;
-	frequency?: number;
-	azimuth?: number;
-	elevation?: number;
-	used?: boolean;
-};
+import { SatelliteSkyPlot } from '@/pages/Satellites/components/SkyPlot';
+import { SatelliteTable } from '@/pages/Satellites/components/SatelliteTable';
+import { Satellite } from './types';
 
 export const Satellites: FC = () => {
 	const [satellites, setSatellites] = useState<Satellite[]>([]);

@@ -5,7 +5,6 @@
 	"compilerOptions": {
 		"paths": {
 			"@components/*": ["./src/components/*"],
-			"@page-components/*": ["./src/components/pages/*"],
 			"@hooks/*": ["./src/hooks/*"],
 			"@utils/*": ["./src/utils/*"],
 			"@/*": ["./src/*"]
