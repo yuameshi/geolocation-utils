@@ -25,7 +25,7 @@ export const Distance: FC = () => {
 				}
 				lastCoordsRef.current = { lat: currLat, lon: currLon };
 			},
-			error => console.warn('Failed to get position: ', error),
+			error => console.warn('Failed to get FINE location at module Distance: ', error),
 			{
 				enableHighAccuracy: true,
 				distanceFilter: 0,

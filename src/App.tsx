@@ -62,15 +62,15 @@ function App() {
 					BackHandler.exitApp();
 				} else {
 					// timeout or position unavailable, try to get network position as fallback
-					console.warn('Failed to get initial position, trying to use network positioning: ', error);
+					console.warn('Failed to get FINE location as initial location, trying to use fallback COARSE positioning: ', error);
 					Geolocation.getCurrentPosition(
 						position => () => {
-							console.warn('Using fallback network position as initial position.');
+							console.warn('Using fallback COARSE location as initial position, will keep retrying.');
 							AsyncStorage.setItem('session.appStartedPosition.longitude', position.coords.longitude.toString());
 							AsyncStorage.setItem('session.appStartedPosition.latitude', position.coords.latitude.toString());
 						},
 						() => {
-							console.error('Fatal: Unable to get geolocation position, exiting app: ', error);
+							console.error('Fatal: Unable to get fallback COARSE geolocation position, exiting app: ', error);
 							BackHandler.exitApp();
 						},
 						{
@@ -87,9 +87,10 @@ function App() {
 							position => () => {
 								AsyncStorage.setItem('session.appStartedPosition.longitude', position.coords.longitude.toString());
 								AsyncStorage.setItem('session.appStartedPosition.latitude', position.coords.latitude.toString());
+								console.log('Successfully got FINE location as initial position on retry, clearing timer.');
 								clearInterval(intervalId);
 							},
-							() => null,
+							retryError => console.warn('Failed to get FINE location as initial position, will keep retrying: ', retryError),
 							{
 								enableHighAccuracy: true,
 								maximumAge: 5 * 1000,

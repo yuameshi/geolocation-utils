@@ -27,7 +27,7 @@ export const AvgSpeed: FC = () => {
 					lastSpeed.current = geolocation.coords.speed ?? lastSpeed.current;
 				}
 			},
-			error => console.warn('Error getting FINE location at AvgSpeed Module: ', error),
+			error => console.warn('Failed to get FINE location at AvgSpeed module: ', error),
 			{
 				enableHighAccuracy: true,
 				distanceFilter: 0,

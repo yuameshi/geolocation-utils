@@ -62,7 +62,7 @@ export const Odometer = () => {
 	useEffect(() => {
 		const watchId = Geolocation.watchPosition(
 			position => processGeolocation(position),
-			error => console.warn('[GPS] Failed to get position: ', error),
+			error => console.warn('Failed to get FINE location at module Odometer: ', error),
 			{
 				enableHighAccuracy: true,
 				interval: 200,
@@ -80,7 +80,7 @@ export const Odometer = () => {
 			Geolocation.getCurrentPosition(
 				position => processGeolocation(position),
 				error => {
-					console.warn('[NETWORK] Failed to get position: ', error);
+					console.warn('Failed to get COARSE location as fallback at module Odometer: ', error);
 					console.warn('Last position update was at ', new Date(lastUpdateTs).toLocaleTimeString());
 					console.warn('Cleaning up location data...');
 					setSpeed(null);

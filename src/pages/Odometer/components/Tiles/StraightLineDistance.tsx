@@ -22,7 +22,21 @@ export const StraightLineDistance: FC = () => {
 				setCurrentLatitude(position.coords.latitude);
 				setCurrentLongitude(position.coords.longitude);
 			},
-			() => null,
+			error => {
+				console.warn('Failed to get FINE location at module StraightLineDistance, using COARSE instead: ', error);
+				Geolocation.getCurrentPosition(
+					position => {
+						setCurrentLatitude(position.coords.latitude);
+						setCurrentLongitude(position.coords.longitude);
+					},
+					coarseError => console.warn('Failed to get COARSE location at module StraightLineDistance: ', coarseError),
+					{
+						enableHighAccuracy: false,
+						distanceFilter: 0,
+						maximumAge: 5000,
+					},
+				);
+			},
 			{
 				enableHighAccuracy: true,
 				distanceFilter: 1,
