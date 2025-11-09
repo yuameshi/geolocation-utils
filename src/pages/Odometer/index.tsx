@@ -62,7 +62,7 @@ export const Odometer = () => {
 		setAltitudeAccuracy(position.coords.altitudeAccuracy ?? null);
 		setAccuracy(position.coords.accuracy ?? null);
 		// @ts-ignore
-		setSatelliteCount(position.extras.satellites || 0);
+		setSatelliteCount(position.extras.satellites ?? 0);
 		// @ts-ignore
 		if (position.extras.satellitesView !== undefined) setSatelliteCount(`${position.extras.satellites} (${position.extras.satellitesView})`);
 	};

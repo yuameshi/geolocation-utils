@@ -17,7 +17,7 @@ export const Accuracy: FC<Props> = ({ accuracy, unit }) => {
 			style={[styles.tile, verticalLayout ? styles.tileVertical : undefined]}
 			elevation={0}
 		>
-			{(accuracy || Infinity) >= 25 ? (
+			{(accuracy ?? Infinity) >= 25 ? (
 				<Icon
 					source={'crosshairs'}
 					size={24}
