@@ -2,16 +2,17 @@ import { Animated, StyleSheet, useAnimatedValue } from 'react-native';
 import { useEffect, useState, type FC } from 'react';
 import { Text } from 'react-native-paper';
 import { UnitAdapter } from '@utils/unit-adapter';
+import { useStoredValue } from '@hooks/useStoredState';
 
 type Props = {
-	unit: 'Metric' | 'Imperial';
 	speed: number | null;
 	accuracy: number | null;
 };
 
-export const Speed: FC<Props> = ({ speed, unit, accuracy }) => {
+export const Speed: FC<Props> = ({ speed, accuracy }) => {
 	const opacity = useAnimatedValue(0.75);
 	const [idle, setIdle] = useState(true);
+	const unit = useStoredValue<'Metric' | 'Imperial'>('settings.unit') ?? 'Metric';
 
 	const toSolid = Animated.timing(opacity, {
 		toValue: 1,

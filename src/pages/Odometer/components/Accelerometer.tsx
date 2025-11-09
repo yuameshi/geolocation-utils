@@ -2,9 +2,11 @@ import { type FC, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { accelerometer, gravity, SensorTypes, setUpdateIntervalForType } from 'react-native-sensors';
 import { UnitAdapter } from '@utils/unit-adapter';
+import { useStoredValue } from '@hooks/useStoredState';
 
-export const Accelerometer: FC<{ unit: 'Imperial' | 'Metric' }> = ({ unit }) => {
+export const Accelerometer: FC = () => {
 	const gravityRef = useRef({ x: 0, y: 0, z: 0 });
+	const unit = useStoredValue<'Metric' | 'Imperial'>('settings.unit') ?? 'Metric';
 	const [accelerationMagnitude, setAcceleratedMagnitude] = useState(0);
 
 	useEffect(() => {

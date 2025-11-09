@@ -12,6 +12,7 @@ import { Accuracy } from './components/Tiles/Accuracy';
 import { Satellites } from './components/Tiles/Satellites';
 import { Accelerometer } from './components/Accelerometer';
 import Speed from './components/Speed';
+import { useSetStored } from '@hooks/useStoredState';
 
 export const Odometer = () => {
 	const verticalLayout = useVerticalLayout();
@@ -30,6 +31,13 @@ export const Odometer = () => {
 	const [altitudeAccuracy, setAltitudeAccuracy] = useState<number | null>(null);
 	const [satelliteCount, setSatelliteCount] = useState(0);
 	const [unit, setUnit] = useState<'Metric' | 'Imperial'>('Metric');
+
+	const setStoredUnit = useSetStored<'Metric' | 'Imperial'>('settings.unit');
+
+	useEffect(() => {
+		console.log('Setting stored unit to:', unit);
+		setStoredUnit(unit);
+	}, [unit, setStoredUnit]);
 
 	useEffect(() => {
 		Geolocation.setRNConfiguration({
@@ -127,10 +135,7 @@ export const Odometer = () => {
 				{/* Left column */}
 				<View style={verticalLayout ? styles.sideColumnVertical : styles.sideColumn}>
 					<Satellites count={satelliteCount} />
-					<Accuracy
-						accuracy={accuracy}
-						unit={unit}
-					/>
+					<Accuracy accuracy={accuracy} />
 				</View>
 
 				{/* Center column */}
@@ -145,7 +150,6 @@ export const Odometer = () => {
 					>
 						<Speed
 							accuracy={accuracy}
-							unit={unit}
 							speed={speed}
 						/>
 						<Text style={styles.unit}>{UnitAdapter[unit].units.speed}</Text>
@@ -160,7 +164,7 @@ export const Odometer = () => {
 							</>
 						)}
 						<Text style={[styles.coordinates, speed !== null ? styles.coordinatesRight : styles.exclusiveCoordinates]}>
-							<Accelerometer unit={unit} />
+							<Accelerometer />
 						</Text>
 					</View>
 					<Location
@@ -174,7 +178,6 @@ export const Odometer = () => {
 					<Altitude
 						altitude={altitude}
 						altitudeAccuracy={altitudeAccuracy}
-						unit={unit}
 					/>
 					<Heading />
 				</View>

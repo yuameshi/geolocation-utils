@@ -3,15 +3,16 @@ import { Surface, Icon, Text } from 'react-native-paper';
 import { UnitAdapter } from '@utils/unit-adapter';
 import { styles } from './styles';
 import { useVerticalLayout } from '@hooks/useVerticalLayout';
+import { useStoredValue } from '@hooks/useStoredState';
 
 type Props = {
 	altitude: number | null;
 	altitudeAccuracy: number | null;
-	unit: 'Metric' | 'Imperial';
 };
 
-export const Altitude: FC<Props> = ({ altitude, altitudeAccuracy, unit }) => {
+export const Altitude: FC<Props> = ({ altitude, altitudeAccuracy }) => {
 	const verticalLayout = useVerticalLayout();
+	const unit = useStoredValue<'Metric' | 'Imperial'>('settings.unit') ?? 'Metric';
 
 	return (
 		<Surface
