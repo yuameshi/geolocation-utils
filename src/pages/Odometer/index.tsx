@@ -40,23 +40,6 @@ export const Odometer = () => {
 		setStoredUnit(unit);
 	}, [unit, setStoredUnit]);
 
-	useEffect(() => {
-		Geolocation.setRNConfiguration({
-			skipPermissionRequests: false,
-			authorizationLevel: 'always',
-			enableBackgroundLocationUpdates: true,
-			locationProvider: 'auto',
-		});
-		Geolocation.requestAuthorization(
-			() => {
-				console.log('Access for geolocation was granted.');
-			},
-			error => {
-				console.warn('Access for geolocation was denied.', error);
-			},
-		);
-	}, []);
-
 	const processGeolocation = (position: GeolocationResponse) => {
 		setLastUpdateTs(position.timestamp);
 		const date = new Date(position.timestamp);

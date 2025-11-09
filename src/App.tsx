@@ -5,7 +5,7 @@
  * @format
  */
 import { PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
-import { StatusBar, useColorScheme } from 'react-native';
+import { BackHandler, StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { createContext, createElement, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -31,16 +31,82 @@ function App() {
 	};
 
 	useEffect(() => {
-		AsyncStorage.setItem('session.appStartedAt', Date.now().toString());
-		Geolocation.getCurrentPosition(position => {
-			AsyncStorage.setItem('session.appStartedPosition.longitude', position.coords.longitude.toString());
-			AsyncStorage.setItem('session.appStartedPosition.latitude', position.coords.latitude.toString());
+		Geolocation.setRNConfiguration({
+			skipPermissionRequests: false,
+			authorizationLevel: 'always',
+			enableBackgroundLocationUpdates: true,
 		});
+		Geolocation.requestAuthorization(
+			() => console.log('Access for geolocation was granted.'),
+			error => {
+				if (error.code === error.PERMISSION_DENIED) {
+					console.warn('Access for geolocation was denied, exiting app...', error);
+					BackHandler.exitApp();
+				}
+			},
+		);
+
+		AsyncStorage.setItem('session.appStartedAt', Date.now().toString());
+
+		// Get initial position
+		let intervalId: number;
+		Geolocation.getCurrentPosition(
+			position => {
+				AsyncStorage.setItem('session.appStartedPosition.longitude', position.coords.longitude.toString());
+				AsyncStorage.setItem('session.appStartedPosition.latitude', position.coords.latitude.toString());
+			},
+			error => {
+				// if permission denied, exit app
+				if (error.code === error.PERMISSION_DENIED) {
+					console.warn('Access for geolocation was denied, exiting app...', error);
+					BackHandler.exitApp();
+				} else {
+					// timeout or position unavailable, try to get network position as fallback
+					console.warn('Failed to get initial position, trying to use network positioning: ', error);
+					Geolocation.getCurrentPosition(
+						position => () => {
+							console.warn('Using fallback network position as initial position.');
+							AsyncStorage.setItem('session.appStartedPosition.longitude', position.coords.longitude.toString());
+							AsyncStorage.setItem('session.appStartedPosition.latitude', position.coords.latitude.toString());
+						},
+						() => {
+							console.error('Fatal: Unable to get geolocation position, exiting app: ', error);
+							BackHandler.exitApp();
+						},
+						{
+							enableHighAccuracy: false,
+							maximumAge: 5 * 1000,
+							distanceFilter: 0,
+						},
+					);
+
+					// auto retry with gps every 5 seconds, when success clear the interval
+					// if network positioning has failed, the app will exit before reaching this point
+					intervalId = setInterval(() => {
+						Geolocation.getCurrentPosition(
+							position => () => {
+								AsyncStorage.setItem('session.appStartedPosition.longitude', position.coords.longitude.toString());
+								AsyncStorage.setItem('session.appStartedPosition.latitude', position.coords.latitude.toString());
+								clearInterval(intervalId);
+							},
+							() => null,
+							{
+								enableHighAccuracy: true,
+								maximumAge: 5 * 1000,
+								distanceFilter: 0,
+							},
+						);
+					}, 5 * 1000);
+				}
+			},
+			{ enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
+		);
 
 		return () => {
 			AsyncStorage.removeItem('session.appStartedAt');
 			AsyncStorage.removeItem('session.appStartedPosition.longitude');
 			AsyncStorage.removeItem('session.appStartedPosition.latitude');
+			intervalId && clearInterval(intervalId);
 		};
 	}, []);
 
