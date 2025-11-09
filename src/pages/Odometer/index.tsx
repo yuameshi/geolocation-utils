@@ -12,7 +12,7 @@ import { Accuracy } from './components/Tiles/Accuracy';
 import { Satellites } from './components/Tiles/Satellites';
 import { Accelerometer } from './components/Accelerometer';
 import Speed from './components/Speed';
-import { useSetStored } from '@hooks/useStoredState';
+import { useStored } from '@hooks/useStoredState';
 
 export const Odometer = () => {
 	const verticalLayout = useVerticalLayout();
@@ -30,9 +30,8 @@ export const Odometer = () => {
 	const [altitude, setAltitude] = useState<number | null>(null);
 	const [altitudeAccuracy, setAltitudeAccuracy] = useState<number | null>(null);
 	const [satelliteCount, setSatelliteCount] = useState(0);
-	const [unit, setUnit] = useState<'Metric' | 'Imperial'>('Metric');
-
-	const setStoredUnit = useSetStored<'Metric' | 'Imperial'>('settings.unit');
+	const [storedUnit, setStoredUnit] = useStored<'Metric' | 'Imperial'>('settings.unit');
+	const [unit, setUnit] = useState<'Metric' | 'Imperial'>(storedUnit ?? 'Metric');
 
 	useEffect(() => {
 		console.log('Setting stored unit to:', unit);
