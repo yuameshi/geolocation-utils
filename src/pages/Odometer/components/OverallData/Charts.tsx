@@ -1,10 +1,11 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
 import { GridComponent } from 'echarts/components';
 import SvgChart, { SVGRenderer } from '@wuba/react-native-echarts/svgChart';
 import { useWindowDimensions } from 'react-native';
 import { useVerticalLayout } from '@hooks/useVerticalLayout';
+import Geolocation from '@react-native-community/geolocation';
 
 echarts.use([SVGRenderer, LineChart, GridComponent]);
 
@@ -12,17 +13,61 @@ export const Charts = () => {
 	const svgRef = useRef<any>(null);
 	const dimensions = useWindowDimensions();
 	const verticalLayout = useVerticalLayout();
-	console.log(verticalLayout, dimensions.width);
+	const [speeds, setSpeeds] = useState<{ speed: number; ts: number }[]>([]);
+	const [dataY, setDataY] = useState<number[]>([]);
+	const [dataX, setDataX] = useState<number[]>([]);
+
+	useEffect(() => {
+		const watchId = Geolocation.watchPosition(
+			position => {
+				setSpeeds(prev =>
+					[
+						...prev,
+						{
+							speed: position.coords.speed ?? 0,
+							ts: position.timestamp,
+						},
+					].slice(-300),
+				);
+			},
+			error => console.warn('Failed to get FINE location at module Charts: ', error),
+			{
+				enableHighAccuracy: true,
+				distanceFilter: 0,
+				interval: 1000,
+				fastestInterval: 1000,
+				maximumAge: 5000,
+			},
+		);
+
+		return () => Geolocation.clearWatch(watchId);
+	}, []);
+
+	useEffect(() => {
+		const now = Date.now();
+		setDataX(speeds.map(s => Math.floor((s.ts - now) / 1000)));
+		setDataY(speeds.map(s => s.speed));
+	}, [speeds]);
 
 	useEffect(() => {
 		const option: echarts.EChartsCoreOption = {
+			animation: false,
 			xAxis: {
 				type: 'category',
-				data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+				data: dataX,
 			},
-			yAxis: {
-				type: 'value',
-			},
+			yAxis: [
+				{
+					id: 'speed',
+					type: 'value',
+					name: 'Speed',
+
+					alignTicks: true,
+					nameTextStyle: {
+						align: 'left',
+					},
+				},
+			],
 			// remove padding around the chart
 			grid: verticalLayout
 				? undefined
@@ -34,8 +79,10 @@ export const Charts = () => {
 				  },
 			series: [
 				{
-					data: [150, 230, 224, 218, 135, 147, 260],
+					yAxisId: 'speed',
+					data: dataY,
 					type: 'line',
+					symbol: 'none',
 				},
 			],
 		};
@@ -59,7 +106,7 @@ export const Charts = () => {
 		}
 
 		return () => chart?.dispose();
-	}, [dimensions, verticalLayout]);
+	}, [dataX, dataY, dimensions, verticalLayout]);
 
 	return <SvgChart ref={svgRef} />;
 };
