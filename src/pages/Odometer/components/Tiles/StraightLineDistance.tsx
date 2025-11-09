@@ -5,6 +5,7 @@ import { styles } from './styles';
 import { useVerticalLayout } from '@hooks/useVerticalLayout';
 import { useStoredValue } from '@hooks/useStoredState';
 import Geolocation from '@react-native-community/geolocation';
+import { haversineDistance } from '@utils/haversineDistance';
 
 export const StraightLineDistance: FC = () => {
 	const verticalLayout = useVerticalLayout();
@@ -45,16 +46,8 @@ export const StraightLineDistance: FC = () => {
 			return;
 		}
 
-		// calculate straight line distance using Haversine formula
-		const toRad = (value: number) => (value * Math.PI) / 180;
-		const R = 6371e3;
-		const latitudeRad = toRad(latitudeNum);
-		const currentLatitudeRad = toRad(currentLatitude);
-		const deltaLatitude = toRad(currentLatitude - latitudeNum);
-		const deltaLongtitude = toRad(currentLongitude - longitudeNum);
-		const a = Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2) + Math.cos(latitudeRad) * Math.cos(currentLatitudeRad) * Math.sin(deltaLongtitude / 2) * Math.sin(deltaLongtitude / 2);
-		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-		const d = R * c;
+		const d = haversineDistance(latitudeNum, longitudeNum, currentLatitude, currentLongitude);
+
 		setDistance(d);
 	}, [latitude, longitude, currentLatitude, currentLongitude]);
 

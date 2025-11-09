@@ -1,17 +1,44 @@
-import type { FC } from 'react';
+import Geolocation from '@react-native-community/geolocation';
+import { useEffect, useState, useRef, type FC } from 'react';
 import { Surface, Icon, Text } from 'react-native-paper';
 import { UnitAdapter } from '@utils/unit-adapter';
 import { styles } from './styles';
 import { useVerticalLayout } from '@hooks/useVerticalLayout';
 import { useStoredValue } from '@hooks/useStoredState';
+import { haversineDistance } from '@utils/haversineDistance';
 
-type Props = {
-	accuracy: number | null;
-};
-
-export const Distance: FC<Props> = ({ accuracy }) => {
+export const Distance: FC = () => {
 	const verticalLayout = useVerticalLayout();
 	const unit = useStoredValue<'Metric' | 'Imperial'>('settings.unit') ?? 'Metric';
+	const [distance, setDistance] = useState<number | null>(null);
+	const lastCoordsRef = useRef<{ lat: number | null; lon: number | null }>({ lat: null, lon: null });
+
+	useEffect(() => {
+		const watchId = Geolocation.watchPosition(
+			position => {
+				const { latitude: currLat, longitude: currLon } = position.coords || {};
+				if (currLat == null || currLon == null) return;
+
+				if (lastCoordsRef.current.lat !== null && lastCoordsRef.current.lon !== null) {
+					const dist = haversineDistance(lastCoordsRef.current.lat, lastCoordsRef.current.lon, currLat, currLon);
+					setDistance(prev => (prev === null ? dist : prev + dist));
+				}
+				lastCoordsRef.current = { lat: currLat, lon: currLon };
+			},
+			error => console.warn('Failed to get position: ', error),
+			{
+				enableHighAccuracy: true,
+				distanceFilter: 0,
+				interval: 1000,
+				fastestInterval: 1000,
+				maximumAge: 5000,
+			},
+		);
+
+		return () => {
+			Geolocation.clearWatch(watchId);
+		};
+	}, []);
 
 	return (
 		<Surface
@@ -23,8 +50,8 @@ export const Distance: FC<Props> = ({ accuracy }) => {
 				size={24}
 			/>
 			<Text style={styles.label}>Distance</Text>
-			<Text style={styles.value}>{accuracy === null ? '-.-' : UnitAdapter[unit].accuracy(accuracy).toFixed(1)}</Text>
-			<Text style={styles.hint}>{UnitAdapter[unit].units.accuracy}</Text>
+			<Text style={styles.value}>{distance === null ? '-.-' : UnitAdapter[unit].distance(distance).value.toFixed(1)}</Text>
+			<Text style={styles.hint}>{UnitAdapter[unit].distance(distance ?? 0).unit}</Text>
 		</Surface>
 	);
 };
