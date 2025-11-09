@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Surface, Text, useTheme } from 'react-native-paper';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Geolocation, { type GeolocationResponse } from '@react-native-community/geolocation';
 import { UnitAdapter } from '@utils/unit-adapter';
@@ -13,10 +13,12 @@ import { Satellites } from './components/Tiles/Satellites';
 import { Accelerometer } from './components/Accelerometer';
 import Speed from './components/Speed';
 import { useStored } from '@hooks/useStoredState';
+import { OverallData } from './components/OverallData';
 
 export const Odometer = () => {
 	const verticalLayout = useVerticalLayout();
 	const safeArea = useSafeAreaInsets();
+	const dimensions = useWindowDimensions();
 	const {
 		colors: { background },
 	} = useTheme();
@@ -130,57 +132,72 @@ export const Odometer = () => {
 				},
 			]}
 		>
-			<View style={verticalLayout ? styles.containerVertical : styles.container}>
-				{/* Left column */}
-				<View style={verticalLayout ? styles.sideColumnVertical : styles.sideColumn}>
-					<Satellites count={satelliteCount} />
-					<Accuracy accuracy={accuracy} />
-				</View>
-
-				{/* Center column */}
-				<Surface
-					style={styles.centerTile}
-					elevation={0}
+			<ScrollView
+				snapToAlignment="start"
+				snapToInterval={dimensions.height}
+				showsVerticalScrollIndicator={false}
+			>
+				<View
+					style={[
+						verticalLayout ? styles.containerVertical : styles.container,
+						{
+							minHeight: dimensions.height - safeArea.top - safeArea.bottom,
+							minWidth: dimensions.width - safeArea.left - safeArea.right,
+						},
+					]}
 				>
-					<Text style={styles.time}>{time}</Text>
-					<TouchableOpacity
-						style={styles.speedContainer}
-						onPress={() => setUnit(unit === 'Metric' ? 'Imperial' : 'Metric')}
-					>
-						<Speed
-							accuracy={accuracy}
-							speed={speed}
-						/>
-						<Text style={styles.unit}>{UnitAdapter[unit].units.speed}</Text>
-					</TouchableOpacity>
-					<View style={styles.coordinatesContainer}>
-						{speed !== null && (
-							<>
-								<Text style={styles.coordinates}>
-									{UnitAdapter[unit].speedLite(speed).toFixed(1)} {UnitAdapter[unit].units.speedLite}
-								</Text>
-								<Text style={styles.coordinatesSeparator}>·</Text>
-							</>
-						)}
-						<Text style={[styles.coordinates, speed !== null ? styles.coordinatesRight : styles.exclusiveCoordinates]}>
-							<Accelerometer />
-						</Text>
+					{/* Left column */}
+					<View style={verticalLayout ? styles.sideColumnVertical : styles.sideColumn}>
+						<Satellites count={satelliteCount} />
+						<Accuracy accuracy={accuracy} />
 					</View>
-					<Location
-						latitude={latitude}
-						longitude={longitude}
-					/>
-				</Surface>
 
-				{/* Right column */}
-				<View style={verticalLayout ? styles.sideColumnVertical : styles.sideColumn}>
-					<Altitude
-						altitude={altitude}
-						altitudeAccuracy={altitudeAccuracy}
-					/>
-					<Heading />
+					{/* Center column */}
+					<Surface
+						style={styles.centerTile}
+						elevation={0}
+					>
+						<Text style={styles.time}>{time}</Text>
+						<TouchableOpacity
+							style={styles.speedContainer}
+							onPress={() => setUnit(unit === 'Metric' ? 'Imperial' : 'Metric')}
+						>
+							<Speed
+								accuracy={accuracy}
+								speed={speed}
+							/>
+							<Text style={styles.unit}>{UnitAdapter[unit].units.speed}</Text>
+						</TouchableOpacity>
+						<View style={styles.coordinatesContainer}>
+							{speed !== null && (
+								<>
+									<Text style={styles.coordinates}>
+										{UnitAdapter[unit].speedLite(speed).toFixed(1)} {UnitAdapter[unit].units.speedLite}
+									</Text>
+									<Text style={styles.coordinatesSeparator}>·</Text>
+								</>
+							)}
+							<Text style={[styles.coordinates, speed !== null ? styles.coordinatesRight : styles.exclusiveCoordinates]}>
+								<Accelerometer />
+							</Text>
+						</View>
+						<Location
+							latitude={latitude}
+							longitude={longitude}
+						/>
+					</Surface>
+
+					{/* Right column */}
+					<View style={verticalLayout ? styles.sideColumnVertical : styles.sideColumn}>
+						<Altitude
+							altitude={altitude}
+							altitudeAccuracy={altitudeAccuracy}
+						/>
+						<Heading />
+					</View>
 				</View>
-			</View>
+				<OverallData />
+			</ScrollView>
 		</View>
 	);
 };
