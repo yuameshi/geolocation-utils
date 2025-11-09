@@ -47,7 +47,7 @@ export const OverallData = () => {
 				]}
 			>
 				<View style={verticalLayout ? styles.tileSubRowVertical : compact ? styles.tileSubRowLandscapeCompact : styles.tileSubRowLandscape}>
-					<StraightLineDistance accuracy={accuracy} />
+					<StraightLineDistance />
 					<Distance accuracy={accuracy} />
 				</View>
 				<View style={verticalLayout ? styles.tileSubRowVertical : compact ? styles.tileSubRowLandscapeCompact : styles.tileSubRowLandscape}>
