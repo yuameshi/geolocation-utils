@@ -10,10 +10,10 @@ import { haversineDistance } from '@utils/haversine-distance';
 export const StraightLineDistance: FC = () => {
 	const verticalLayout = useVerticalLayout();
 	const unit = useStoredValue<'Metric' | 'Imperial'>('settings.unit') ?? 'Metric';
-	const [currentLatitude, setCurrentLatitude] = useState(0);
-	const [currentLongitude, setCurrentLongitude] = useState(0);
-	const latitude = useStoredValue('session.appStartedPosition.latitude') ?? '0';
-	const longitude = useStoredValue('session.appStartedPosition.longitude') ?? '0';
+	const [currentLatitude, setCurrentLatitude] = useState<number | null>(null);
+	const [currentLongitude, setCurrentLongitude] = useState<number | null>(null);
+	const latitude = useStoredValue('session.appStartedPosition.latitude');
+	const longitude = useStoredValue('session.appStartedPosition.longitude');
 	const [distance, setDistance] = useState<number | null>(null);
 
 	useEffect(() => {
@@ -25,15 +25,16 @@ export const StraightLineDistance: FC = () => {
 			error => {
 				console.warn('Failed to get FINE location at module StraightLineDistance, using COARSE instead: ', error);
 				Geolocation.getCurrentPosition(
-					position => {
-						setCurrentLatitude(position.coords.latitude);
-						setCurrentLongitude(position.coords.longitude);
+					positionCoarse => {
+						setCurrentLatitude(positionCoarse.coords.latitude);
+						setCurrentLongitude(positionCoarse.coords.longitude);
 					},
 					coarseError => console.warn('Failed to get COARSE location at module StraightLineDistance: ', coarseError),
 					{
 						enableHighAccuracy: false,
 						distanceFilter: 0,
 						maximumAge: 5000,
+						timeout: 5000,
 					},
 				);
 			},
@@ -42,6 +43,7 @@ export const StraightLineDistance: FC = () => {
 				distanceFilter: 1,
 				interval: 1000,
 				fastestInterval: 1000,
+				timeout: 5000,
 				maximumAge: 5000,
 			},
 		);
@@ -52,6 +54,11 @@ export const StraightLineDistance: FC = () => {
 	}, []);
 
 	useEffect(() => {
+		if (latitude == null || longitude == null || currentLatitude == null || currentLongitude == null) {
+			setDistance(null);
+			return;
+		}
+
 		const latitudeNum = parseFloat(latitude);
 		const longitudeNum = parseFloat(longitude);
 
