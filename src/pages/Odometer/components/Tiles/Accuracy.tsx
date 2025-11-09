@@ -15,7 +15,7 @@ export const Accuracy: FC<Props> = ({ accuracy }) => {
 
 	return (
 		<Surface
-			style={[styles.tile, verticalLayout ? styles.tileVertical : undefined]}
+			style={[styles.tile, verticalLayout && styles.tileVertical]}
 			elevation={0}
 		>
 			{(accuracy ?? Infinity) >= 25 ? (

@@ -16,7 +16,7 @@ export const Altitude: FC<Props> = ({ altitude, altitudeAccuracy }) => {
 
 	return (
 		<Surface
-			style={[styles.tile, verticalLayout ? styles.tileVertical : undefined]}
+			style={[styles.tile, verticalLayout && styles.tileVertical]}
 			elevation={0}
 		>
 			<Icon

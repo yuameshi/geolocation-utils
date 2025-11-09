@@ -16,7 +16,7 @@ export const Satellites: FC<Props> = ({ count }) => {
 	return (
 		<TouchableOpacity
 			onPress={() => router?.setRoute('Satellites')}
-			style={[styles.tile, verticalLayout ? styles.tileVertical : undefined]}
+			style={[styles.tile, verticalLayout && styles.tileVertical]}
 		>
 			<Icon
 				source="satellite-variant"
