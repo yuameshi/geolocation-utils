@@ -5,7 +5,7 @@ import { UnitAdapter } from '@utils/unit-adapter';
 import { styles } from './styles';
 import { useVerticalLayout } from '@hooks/useVerticalLayout';
 import { useStoredValue } from '@hooks/useStoredState';
-import { haversineDistance } from '@utils/haversineDistance';
+import { haversineDistance } from '@utils/haversine-distance';
 
 export const Distance: FC = () => {
 	const verticalLayout = useVerticalLayout();

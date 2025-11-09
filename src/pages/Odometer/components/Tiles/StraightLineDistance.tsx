@@ -5,7 +5,7 @@ import { styles } from './styles';
 import { useVerticalLayout } from '@hooks/useVerticalLayout';
 import { useStoredValue } from '@hooks/useStoredState';
 import Geolocation from '@react-native-community/geolocation';
-import { haversineDistance } from '@utils/haversineDistance';
+import { haversineDistance } from '@utils/haversine-distance';
 
 export const StraightLineDistance: FC = () => {
 	const verticalLayout = useVerticalLayout();
