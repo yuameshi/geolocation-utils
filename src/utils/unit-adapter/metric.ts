@@ -15,12 +15,24 @@ export const acceleratedSpeed = (metersPerSecondSqare: number) => {
 	return metersPerSecondSqare;
 };
 
+export const distance = (meters: number) => {
+	// whether bigger than 1 miles
+	if (meters >= 1000) {
+		// miles
+		return { value: meters / 1000, unit: 'km' };
+	} else {
+		// feet
+		return { value: meters, unit: 'm' };
+	}
+};
+
 export default {
 	speed,
 	speedLite,
 	altitude,
 	accuracy,
 	acceleratedSpeed,
+	distance,
 	units: {
 		accuracy: 'meters',
 		altitude: 'meters',

@@ -13,7 +13,18 @@ export const accuracy = (meters: number) => {
 
 export const acceleratedSpeed = (metersPerSecondSqare: number) => {
 	return metersPerSecondSqare * 3.2808399;
-}
+};
+
+export const distance = (meters: number) => {
+	// whether bigger than 1 miles
+	if (meters >= 1609.344) {
+		// miles
+		return { value: meters / 1609.344, unit: 'miles' };
+	} else {
+		// feet
+		return { value: meters * 3.2808399, unit: 'feet' };
+	}
+};
 
 export default {
 	speed,
@@ -21,6 +32,7 @@ export default {
 	altitude,
 	accuracy,
 	acceleratedSpeed,
+	distance,
 	units: {
 		accuracy: 'feet',
 		altitude: 'feet',
