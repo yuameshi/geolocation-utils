@@ -6,9 +6,10 @@ import { UnitAdapter } from '@utils/unit-adapter';
 type Props = {
 	unit: 'Metric' | 'Imperial';
 	speed: number | null;
+	accuracy: number | null;
 };
 
-export const Speed: FC<Props> = ({ speed, unit }) => {
+export const Speed: FC<Props> = ({ speed, unit, accuracy }) => {
 	const opacity = useAnimatedValue(0.75);
 	const [idle, setIdle] = useState(true);
 
@@ -76,10 +77,9 @@ export const Speed: FC<Props> = ({ speed, unit }) => {
 	}, [idle]);
 
 	useEffect(() => {
-		if (speed === null && !idle) setIdle(true);
-		else if (speed !== null && idle) setIdle(false);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [speed]);
+		if (speed === null || (accuracy ?? Infinity) > 25) setIdle(true);
+		else if (speed !== null && (accuracy ?? Infinity) < 25) setIdle(false);
+	}, [speed, accuracy]);
 
 	return (
 		<Animated.View style={{ opacity }}>

@@ -144,6 +144,7 @@ export const Odometer = () => {
 						onPress={() => setUnit(unit === 'Metric' ? 'Imperial' : 'Metric')}
 					>
 						<Speed
+							accuracy={accuracy}
 							unit={unit}
 							speed={speed}
 						/>
