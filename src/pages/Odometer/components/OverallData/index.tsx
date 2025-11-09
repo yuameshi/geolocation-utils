@@ -12,7 +12,6 @@ export const OverallData = () => {
 	const dimensions = useWindowDimensions();
 	const compact = !verticalLayout && dimensions.height < 540;
 	const safeArea = useSafeAreaInsets();
-	const accuracy = 1234.5; // Example accuracy value
 
 	return (
 		<View
@@ -48,10 +47,10 @@ export const OverallData = () => {
 			>
 				<View style={verticalLayout ? styles.tileSubRowVertical : compact ? styles.tileSubRowLandscapeCompact : styles.tileSubRowLandscape}>
 					<StraightLineDistance />
-					<Distance accuracy={accuracy} />
+					<Distance />
 				</View>
 				<View style={verticalLayout ? styles.tileSubRowVertical : compact ? styles.tileSubRowLandscapeCompact : styles.tileSubRowLandscape}>
-					<AvgSpeed accuracy={accuracy} />
+					<AvgSpeed />
 					<Timer />
 				</View>
 			</View>
