@@ -6,6 +6,7 @@ import SvgChart, { SVGRenderer } from '@wuba/react-native-echarts/svgChart';
 import { useWindowDimensions } from 'react-native';
 import { useVerticalLayout } from '@hooks/useVerticalLayout';
 import Geolocation from '@react-native-community/geolocation';
+import { useTheme } from 'react-native-paper';
 
 echarts.use([SVGRenderer, LineChart, GridComponent]);
 
@@ -14,6 +15,9 @@ export const Charts = () => {
 	const dimensions = useWindowDimensions();
 	const verticalLayout = useVerticalLayout();
 	const [speeds, setSpeeds] = useState<{ speed: number; ts: number }[]>([]);
+	const {
+		colors: { primary },
+	} = useTheme();
 	const [dataY, setDataY] = useState<number[]>([]);
 	const [dataX, setDataX] = useState<number[]>([]);
 
@@ -52,6 +56,7 @@ export const Charts = () => {
 	useEffect(() => {
 		const option: echarts.EChartsCoreOption = {
 			animation: false,
+			color: primary,
 			xAxis: {
 				type: 'category',
 				data: dataX,
@@ -106,7 +111,7 @@ export const Charts = () => {
 		}
 
 		return () => chart?.dispose();
-	}, [dataX, dataY, dimensions, verticalLayout]);
+	}, [dataX, dataY, dimensions, verticalLayout, primary]);
 
 	return <SvgChart ref={svgRef} />;
 };
