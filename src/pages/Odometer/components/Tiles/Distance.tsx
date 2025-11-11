@@ -11,7 +11,7 @@ export const Distance: FC = () => {
 	const verticalLayout = useVerticalLayout();
 	const unit = useStoredValue<'Metric' | 'Imperial'>('settings.unit') ?? 'Metric';
 	const [distance, setDistance] = useState<number | null>(null);
-	const lastCoordsRef = useRef<{ lat: number | null; lon: number | null }>({ lat: null, lon: null });
+	const lastCoordsRef = useRef<{ lat: number | null; lon: number | null; accuracy: number | null }>({ lat: null, lon: null, accuracy: null });
 
 	useEffect(() => {
 		const watchId = Geolocation.watchPosition(
@@ -19,11 +19,21 @@ export const Distance: FC = () => {
 				const { latitude: currLat, longitude: currLon } = position.coords || {};
 				if (currLat == null || currLon == null) return;
 
-				if (lastCoordsRef.current.lat !== null && lastCoordsRef.current.lon !== null) {
+				if (lastCoordsRef.current.lat !== null && lastCoordsRef.current.lon !== null && lastCoordsRef.current.accuracy !== null) {
 					const dist = haversineDistance(lastCoordsRef.current.lat, lastCoordsRef.current.lon, currLat, currLon);
-					setDistance(prev => (prev === null ? dist : prev + dist));
+					const acc1 = lastCoordsRef.current.accuracy;
+					const acc2 = position.coords.accuracy;
+					const avgAcc = (acc1 + acc2) / 2;
+					// if deviance is larger than distance, skip
+					if (acc1 > dist && acc2 > dist) {
+						// skip
+					} else {
+						// subtract average accuracy from distance
+						const realDist = Math.max(0, dist - avgAcc);
+						setDistance(prev => (prev === null ? dist : prev + realDist));
+					}
 				}
-				lastCoordsRef.current = { lat: currLat, lon: currLon };
+				lastCoordsRef.current = { lat: currLat, lon: currLon, accuracy: position.coords.accuracy };
 			},
 			error => console.warn('Failed to get FINE location at module Distance: ', error),
 			{
