@@ -20,11 +20,13 @@ export const AvgSpeed: FC = () => {
 				const nowTs = geolocation.timestamp / 1000;
 				const timeDiff = nowTs - startTs;
 				if (timeDiff > 0) {
-					const prevTotalSpeed = avgSpeed * (timeDiff - 1);
-					const newTotalSpeed = prevTotalSpeed + (geolocation.coords.speed || lastSpeed.current);
-					const newAvgSpeed = newTotalSpeed / timeDiff;
-					setAvgSpeed(newAvgSpeed);
-					lastSpeed.current = geolocation.coords.speed ?? lastSpeed.current;
+					setAvgSpeed(prevAvgSpeed => {
+						const prevTotalSpeed = prevAvgSpeed * (timeDiff - 1);
+						const newTotalSpeed = prevTotalSpeed + (geolocation.coords.speed || lastSpeed.current);
+						const newAvgSpeed = newTotalSpeed / timeDiff;
+						lastSpeed.current = geolocation.coords.speed ?? lastSpeed.current;
+						return newAvgSpeed;
+					});
 				}
 			},
 			error => console.warn('Failed to get FINE location at AvgSpeed module: ', error),
@@ -38,8 +40,7 @@ export const AvgSpeed: FC = () => {
 		return () => {
 			Geolocation.clearWatch(watchId);
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [startTs]);
 
 	return (
 		<Surface
