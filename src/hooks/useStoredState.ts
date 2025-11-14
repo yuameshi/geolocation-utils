@@ -1,33 +1,35 @@
-import Store, { useAsyncStorage } from '@react-native-async-storage/async-storage';
-import { useEffect, useRef } from 'react';
+import { storage } from '@/storage';
+import { useEffect, useState } from 'react';
 
 export const useStored = <T = string>(key: string) => {
-	const stored = useAsyncStorage(key);
-	const value = useRef<T | null>(null);
+	const [value, setValue] = useState<T | null>();
 
 	useEffect(() => {
-		Store.getItem(key).then(current => {
-			if (current !== null) {
-				try {
-					value.current = JSON.parse(current) as T;
-				} catch {
-					// fallback for string
-					value.current = current as unknown as T;
+		const subscribe = storage.addOnValueChangedListener(changedKey => {
+			if (changedKey === key) {
+				const storedValue = storage.getString(changedKey);
+				if (storedValue) {
+					try {
+						const parsed: T = JSON.parse(storedValue);
+						setValue(parsed);
+					} catch {
+						setValue(storedValue as unknown as T);
+					}
+				} else {
+					setValue(null);
 				}
-			} else {
-				value.current = null;
 			}
 		});
-	}, [key, stored]);
+
+		return () => subscribe.remove();
+	}, [key]);
 
 	const setItem = (newValue: T) => {
-		const toStore = typeof newValue === 'string' ? newValue : JSON.stringify(newValue);
-		Store.setItem(key, toStore).then(() => {
-			value.current = newValue;
-		});
+		const valueToStore = typeof newValue === 'string' ? newValue : JSON.stringify(newValue);
+		storage.set(key, valueToStore);
 	};
 
-	return [value.current, setItem] as const;
+	return [value, setItem] as const;
 };
 
 export const useStoredValue = <T = string>(key: string) => {

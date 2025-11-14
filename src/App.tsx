@@ -8,8 +8,8 @@ import { PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
 import { BackHandler, StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { createContext, createElement, useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from '@react-native-community/geolocation';
+import { storage } from './storage';
 
 import { Odometer } from './pages/Odometer';
 import { Satellites } from './pages/Satellites';
@@ -46,14 +46,14 @@ function App() {
 			},
 		);
 
-		AsyncStorage.setItem('session.appStartedAt', Date.now().toString());
+		storage.set('session.appStartedAt', Date.now().toString());
 
 		// Get initial position
 		let intervalId: number;
 		Geolocation.getCurrentPosition(
 			position => {
-				AsyncStorage.setItem('session.appStartedPosition.longitude', position.coords.longitude.toString());
-				AsyncStorage.setItem('session.appStartedPosition.latitude', position.coords.latitude.toString());
+				storage.set('session.appStartedPosition.longitude', position.coords.longitude.toString());
+				storage.set('session.appStartedPosition.latitude', position.coords.latitude.toString());
 			},
 			error => {
 				// if permission denied, exit app
@@ -66,8 +66,8 @@ function App() {
 					Geolocation.getCurrentPosition(
 						position => {
 							console.warn('Using fallback COARSE location as initial position, will keep retrying.');
-							AsyncStorage.setItem('session.appStartedPosition.longitude', position.coords.longitude.toString());
-							AsyncStorage.setItem('session.appStartedPosition.latitude', position.coords.latitude.toString());
+							storage.set('session.appStartedPosition.longitude', position.coords.longitude.toString());
+							storage.set('session.appStartedPosition.latitude', position.coords.latitude.toString());
 						},
 						() => {
 							console.error('Fatal: Unable to get fallback COARSE geolocation position, exiting app: ', error);
@@ -87,8 +87,8 @@ function App() {
 						console.log('Retrying to get FINE location as initial position...');
 						Geolocation.getCurrentPosition(
 							position => {
-								AsyncStorage.setItem('session.appStartedPosition.longitude', position.coords.longitude.toString());
-								AsyncStorage.setItem('session.appStartedPosition.latitude', position.coords.latitude.toString());
+								storage.set('session.appStartedPosition.longitude', position.coords.longitude.toString());
+								storage.set('session.appStartedPosition.latitude', position.coords.latitude.toString());
 								console.log('Successfully got FINE location as initial position on retry, clearing timer.');
 								clearInterval(intervalId);
 							},
@@ -106,9 +106,9 @@ function App() {
 		);
 
 		return () => {
-			AsyncStorage.removeItem('session.appStartedAt');
-			AsyncStorage.removeItem('session.appStartedPosition.longitude');
-			AsyncStorage.removeItem('session.appStartedPosition.latitude');
+			storage.remove('session.appStartedAt');
+			storage.remove('session.appStartedPosition.longitude');
+			storage.remove('session.appStartedPosition.latitude');
 			intervalId && clearInterval(intervalId);
 		};
 	}, []);
