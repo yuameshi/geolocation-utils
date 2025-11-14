@@ -7,6 +7,8 @@ import { useWindowDimensions } from 'react-native';
 import { useVerticalLayout } from '@hooks/useVerticalLayout';
 import Geolocation from '@react-native-community/geolocation';
 import { useTheme } from 'react-native-paper';
+import { useStoredValue } from '@hooks/useStoredState';
+import { UnitAdapter } from '@utils/unit-adapter';
 
 echarts.use([SVGRenderer, LineChart, GridComponent]);
 
@@ -20,6 +22,7 @@ export const Charts = () => {
 	} = useTheme();
 	const [dataY, setDataY] = useState<number[]>([]);
 	const [dataX, setDataX] = useState<number[]>([]);
+	const unit = useStoredValue<'Metric' | 'Imperial'>('settings.unit') ?? 'Metric';
 
 	useEffect(() => {
 		const watchId = Geolocation.watchPosition(
@@ -50,8 +53,8 @@ export const Charts = () => {
 	useEffect(() => {
 		const now = Date.now();
 		setDataX(speeds.map(s => Math.floor((s.ts - now) / 1000)));
-		setDataY(speeds.map(s => s.speed));
-	}, [speeds]);
+		setDataY(speeds.map(s => UnitAdapter[unit].speed(s.speed)));
+	}, [speeds, unit]);
 
 	useEffect(() => {
 		const option: echarts.EChartsCoreOption = {
@@ -65,7 +68,7 @@ export const Charts = () => {
 				{
 					id: 'speed',
 					type: 'value',
-					name: 'Speed',
+					name: UnitAdapter[unit].units.speed.toUpperCase(),
 
 					alignTicks: true,
 					nameTextStyle: {
@@ -111,7 +114,7 @@ export const Charts = () => {
 		}
 
 		return () => chart?.dispose();
-	}, [dataX, dataY, dimensions, verticalLayout, primary]);
+	}, [dataX, dataY, dimensions, verticalLayout, primary, unit]);
 
 	return <SvgChart ref={svgRef} />;
 };
