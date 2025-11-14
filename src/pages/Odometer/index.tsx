@@ -36,7 +36,7 @@ export const Odometer = () => {
 	const [unit, setUnit] = useState<'Metric' | 'Imperial'>(storedUnit ?? 'Metric');
 
 	useEffect(() => {
-		console.log('Setting stored unit to:', unit);
+		// console.log('Setting stored unit to:', unit);
 		setStoredUnit(unit);
 	}, [unit, setStoredUnit]);
 
