@@ -106,9 +106,9 @@ function App() {
 		);
 
 		return () => {
-			storage.remove('session.appStartedAt');
-			storage.remove('session.appStartedPosition.longitude');
-			storage.remove('session.appStartedPosition.latitude');
+			// storage.remove('session.appStartedAt');
+			// storage.remove('session.appStartedPosition.longitude');
+			// storage.remove('session.appStartedPosition.latitude');
 			intervalId && clearInterval(intervalId);
 		};
 	}, []);
