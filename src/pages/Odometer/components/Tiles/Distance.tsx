@@ -29,7 +29,8 @@ export const Distance: FC = () => {
 						// skip
 					} else {
 						// subtract average accuracy from distance
-						const realDist = Math.max(0, dist - avgAcc);
+						// dividing by 4 to avoid overcompensation
+						const realDist = Math.max(0, dist - avgAcc / 4);
 						setDistance(prev => (prev === null ? dist : prev + realDist));
 					}
 				}
