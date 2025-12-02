@@ -53,6 +53,7 @@ export const Speed: FC<Props> = ({ speed, accuracy }) => {
 	);
 
 	useEffect(() => {
+		console.log('Speed idle state changed to: ', idle);
 		// If idle after 2 seconds, start flashing
 		const timeoutId =
 			idle &&
@@ -62,11 +63,13 @@ export const Speed: FC<Props> = ({ speed, accuracy }) => {
 			}, 2 * 1000);
 
 		return () => {
+			console.log('Speed idle cleanup for idle state: ', idle);
 			timeoutId && clearTimeout(timeoutId);
 			// idle is last state here
 			if (idle) {
 				// Last state is idle, so stop animation and turn solid before active state
 				opacity.stopAnimation(() => {
+					flash.stop();
 					toSolid.start();
 				});
 			} else {
@@ -78,8 +81,19 @@ export const Speed: FC<Props> = ({ speed, accuracy }) => {
 	}, [idle]);
 
 	useEffect(() => {
-		if (speed === null || (accuracy ?? Infinity) > 25) setIdle(true);
-		else if (speed !== null && (accuracy ?? Infinity) < 25) setIdle(false);
+		console.log('Speed received new speed/accuracy: ', speed, accuracy, ' current idle:', idle);
+		if (idle === false && (speed === null || (accuracy ?? Infinity) > 25)) {
+			// Only update idle to true if previous state is false
+			// to avoid re-triggering animations etc.
+			console.log('Speed setting idle to true');
+			setIdle(true);
+		} else if (idle === true && speed !== null && (accuracy ?? Infinity) < 25) {
+			// Same as above, only update if previous state is true
+			console.log('Speed setting idle to false');
+			setIdle(false);
+		}
+		// DO NOT add idle to deps array
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [speed, accuracy]);
 
 	return (
