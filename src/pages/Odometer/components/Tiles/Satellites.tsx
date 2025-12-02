@@ -27,7 +27,7 @@ export const Satellites: FC<Props> = ({ count }) => {
 
 	return Platform.OS === 'android' ? (
 		<TouchableOpacity
-			onPress={() => router?.setRoute('Satellites')}
+			onLongPress={() => router?.setRoute('Satellites')}
 			style={[styles.tile, verticalLayout && styles.tileVertical]}
 		>
 			{content}
