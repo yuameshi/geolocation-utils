@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Surface, Text, useTheme } from 'react-native-paper';
 import { ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,6 +34,8 @@ export const Odometer = () => {
 	const [satelliteCount, setSatelliteCount] = useState(0);
 	const [storedUnit, setStoredUnit] = useStored<'Metric' | 'Imperial'>('settings.unit');
 	const [unit, setUnit] = useState<'Metric' | 'Imperial'>(storedUnit ?? 'Metric');
+	const [isHudMode, setIsHudMode] = useState(false);
+	const scrollViewRef = useRef<ScrollView>(null);
 
 	useEffect(() => {
 		// console.log('Setting stored unit to:', unit);
@@ -119,6 +121,8 @@ export const Odometer = () => {
 				snapToAlignment="start"
 				snapToInterval={dimensions.height}
 				showsVerticalScrollIndicator={false}
+				contentContainerStyle={isHudMode ? { transform: [{ scaleY: -1 }] } : {}}
+				ref={scrollViewRef}
 			>
 				<View
 					style={[
@@ -144,6 +148,13 @@ export const Odometer = () => {
 						<TouchableOpacity
 							style={styles.speedContainer}
 							onPress={() => setUnit(unit === 'Metric' ? 'Imperial' : 'Metric')}
+							onLongPress={() =>
+								setIsHudMode(prev => {
+									if (prev === true && scrollViewRef.current) scrollViewRef.current.scrollTo({ y: 0, animated: true });
+									else if (prev === false && scrollViewRef.current) scrollViewRef.current?.scrollToEnd({ animated: true });
+									return !prev;
+								})
+							}
 						>
 							<Speed
 								accuracy={accuracy}
