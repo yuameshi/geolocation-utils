@@ -5,6 +5,7 @@ export const useStored = <T = string>(key: string) => {
 	const [value, setValue] = useState<T | null>();
 
 	useEffect(() => {
+		setValue(storage.getString(key) as unknown as T);
 		const subscribe = storage.addOnValueChangedListener(changedKey => {
 			if (changedKey === key) {
 				const storedValue = storage.getString(changedKey);
