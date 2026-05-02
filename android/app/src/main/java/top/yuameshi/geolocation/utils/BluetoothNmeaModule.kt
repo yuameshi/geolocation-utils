@@ -82,7 +82,7 @@ class BluetoothNmeaModule(reactContext: ReactApplicationContext) : ReactContextB
                 return
             }
 
-            val activity = currentActivity
+            val activity = getCurrentActivity()
             if (activity == null) {
                 promise.reject("NO_ACTIVITY", "No active Activity")
                 return
