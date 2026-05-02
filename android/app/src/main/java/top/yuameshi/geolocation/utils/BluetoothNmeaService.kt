@@ -36,6 +36,21 @@ object BluetoothNmeaService {
         get() = connectedSockets.size
 
     @SuppressLint("MissingPermission")
+    fun getConnectedDevices(): List<Map<String, String>> {
+        return connectedSockets.mapNotNull { socket ->
+            try {
+                val device = socket.remoteDevice
+                mapOf(
+                    "name" to (device.name ?: "Unknown"),
+                    "address" to device.address
+                )
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
     fun start(context: Context): Result<Unit> {
         if (isRunning) return Result.success(Unit)
 

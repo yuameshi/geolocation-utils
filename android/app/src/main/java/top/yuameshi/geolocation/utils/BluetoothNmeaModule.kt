@@ -58,6 +58,14 @@ class BluetoothNmeaModule(reactContext: ReactApplicationContext) : ReactContextB
         val map = Arguments.createMap()
         map.putBoolean("isRunning", BluetoothNmeaService.isRunning)
         map.putInt("connectedClients", BluetoothNmeaService.connectedClientCount)
+        val devices = Arguments.createArray()
+        for (dev in BluetoothNmeaService.getConnectedDevices()) {
+            val devMap = Arguments.createMap()
+            devMap.putString("name", dev["name"])
+            devMap.putString("address", dev["address"])
+            devices.pushMap(devMap)
+        }
+        map.putArray("devices", devices)
         promise.resolve(map)
     }
 

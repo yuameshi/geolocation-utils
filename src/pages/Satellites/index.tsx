@@ -2,7 +2,7 @@
 import { useEffect, useState, useContext, useCallback, type FC } from 'react';
 import { BackHandler, Platform, PermissionsAndroid } from 'react-native';
 import { View, ScrollView } from 'react-native';
-import { Text, useTheme, Surface, Card, Appbar, Portal, Dialog, Button, Switch } from 'react-native-paper';
+import { Text, useTheme, Surface, Card, Appbar, Portal, Dialog, Button, Switch, Divider } from 'react-native-paper';
 import { NativeModules, Alert } from 'react-native';
 import { RouterContext } from '@/App';
 import { SatelliteSkyPlot } from '@/pages/Satellites/components/SkyPlot';
@@ -15,6 +15,7 @@ export const Satellites: FC = () => {
 	const [dialogVisible, setDialogVisible] = useState(false);
 	const [btRunning, setBtRunning] = useState(false);
 	const [connectedClients, setConnectedClients] = useState(0);
+	const [devices, setDevices] = useState<{name: string; address: string}[]>([]);
 	const [btLoading, setBtLoading] = useState(false);
 	const [discoverable, setDiscoverable] = useState(false);
 	const theme = useTheme();
@@ -25,6 +26,7 @@ export const Satellites: FC = () => {
 			const status = await NativeModules.BluetoothNmeaModule.getServerStatus();
 			setBtRunning(status.isRunning);
 			setConnectedClients(status.connectedClients);
+			setDevices(status.devices ?? []);
 		} catch (_) {}
 	}, []);
 
@@ -162,6 +164,18 @@ export const Satellites: FC = () => {
 								<Text variant="bodyMedium">Discoverable</Text>
 								<Switch value={discoverable} onValueChange={toggleDiscoverable} />
 							</View>
+						)}
+						{btRunning && devices.length > 0 && (
+							<>
+								<Divider style={{ marginTop: 12, marginBottom: 8 }} />
+								<Text variant="labelLarge">Connected devices</Text>
+								{devices.map((dev, i) => (
+									<View key={dev.address} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 }}>
+										<Text variant="bodyMedium">{dev.name}</Text>
+										<Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>{dev.address}</Text>
+									</View>
+								))}
+							</>
 						)}
 					</Dialog.Content>
 					<Dialog.Actions>
