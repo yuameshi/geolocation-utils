@@ -1,9 +1,9 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useEffect, useState, useContext, useCallback, type FC } from 'react';
-import { BackHandler } from 'react-native';
+import { BackHandler, Platform, PermissionsAndroid } from 'react-native';
 import { View, ScrollView } from 'react-native';
-import { Text, useTheme, Surface, Card, Appbar, Portal, Dialog, Button } from 'react-native-paper';
-import { NativeModules } from 'react-native';
+import { Text, useTheme, Surface, Card, Appbar, Portal, Dialog, Button, Switch } from 'react-native-paper';
+import { NativeModules, Alert } from 'react-native';
 import { RouterContext } from '@/App';
 import { SatelliteSkyPlot } from '@/pages/Satellites/components/SkyPlot';
 import { SatelliteTable } from '@/pages/Satellites/components/SatelliteTable';
@@ -16,6 +16,7 @@ export const Satellites: FC = () => {
 	const [btRunning, setBtRunning] = useState(false);
 	const [connectedClients, setConnectedClients] = useState(0);
 	const [btLoading, setBtLoading] = useState(false);
+	const [discoverable, setDiscoverable] = useState(false);
 	const theme = useTheme();
 	const router = useContext(RouterContext);
 
@@ -32,7 +33,19 @@ export const Satellites: FC = () => {
 		try {
 			if (btRunning) {
 				await NativeModules.BluetoothNmeaModule.stopBluetoothServer();
+				setDiscoverable(false);
 			} else {
+				const granted = await PermissionsAndroid.requestMultiple([
+					PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+					PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+				]);
+				const connectGranted = granted[PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT] === PermissionsAndroid.RESULTS.GRANTED;
+				const scanGranted = granted[PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN] === PermissionsAndroid.RESULTS.GRANTED;
+				if (!connectGranted || !scanGranted) {
+					Alert.alert('Permission required', 'Nearby devices permission is required to start the Bluetooth server.');
+					setBtLoading(false);
+					return;
+				}
 				await NativeModules.BluetoothNmeaModule.startBluetoothServer();
 			}
 			await refreshBtStatus();
@@ -44,9 +57,31 @@ export const Satellites: FC = () => {
 	}, [btRunning, refreshBtStatus]);
 
 	const openDialog = useCallback(() => {
+		if (Platform.OS === 'android' && (Platform.Version as number) < 31) {
+			Alert.alert('Unsupported', 'Bluetooth NMEA sharing requires Android 12 (API 31) or above.');
+			return;
+		}
 		setDialogVisible(true);
 		refreshBtStatus();
 	}, [refreshBtStatus]);
+
+	const toggleDiscoverable = useCallback(async (value: boolean) => {
+		if (value) {
+			const granted = await PermissionsAndroid.request(
+				PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADVERTISE,
+			);
+			if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+				Alert.alert('Permission required', 'Bluetooth advertise permission is required to enable discoverable mode.');
+				return;
+			}
+		}
+		try {
+			await NativeModules.BluetoothNmeaModule.setDiscoverable(value);
+			setDiscoverable(value);
+		} catch (e: any) {
+			console.warn('Discoverable toggle error:', e?.message || e);
+		}
+	}, []);
 
 	useEffect(() => {
 		refreshBtStatus();
@@ -122,6 +157,12 @@ export const Satellites: FC = () => {
 					<Dialog.Content>
 						<Text variant="bodyLarge">Status: {btRunning ? 'Running' : 'Stopped'}</Text>
 						<Text variant="bodyMedium" style={{ marginTop: 4 }}>Connected clients: {connectedClients}</Text>
+						{btRunning && (
+							<View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+								<Text variant="bodyMedium">Discoverable</Text>
+								<Switch value={discoverable} onValueChange={toggleDiscoverable} />
+							</View>
+						)}
 					</Dialog.Content>
 					<Dialog.Actions>
 						<Button onPress={() => setDialogVisible(false)}>Close</Button>

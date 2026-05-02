@@ -1,6 +1,10 @@
 package top.yuameshi.geolocation.utils
 
 import android.Manifest
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import com.facebook.react.bridge.Arguments
@@ -55,5 +59,36 @@ class BluetoothNmeaModule(reactContext: ReactApplicationContext) : ReactContextB
         map.putBoolean("isRunning", BluetoothNmeaService.isRunning)
         map.putInt("connectedClients", BluetoothNmeaService.connectedClientCount)
         promise.resolve(map)
+    }
+
+    @ReactMethod
+    fun setDiscoverable(enabled: Boolean, promise: Promise) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            promise.reject("UNSUPPORTED", "Discoverable mode requires Android 12 (API 31) or above")
+            return
+        }
+
+        if (enabled) {
+            if (reactApplicationContext.checkSelfPermission(Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) {
+                promise.reject("NO_PERMISSION", "Bluetooth advertise permission required")
+                return
+            }
+
+            val activity = currentActivity
+            if (activity == null) {
+                promise.reject("NO_ACTIVITY", "No active Activity")
+                return
+            }
+
+            val intent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
+                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
+            }
+            activity.startActivity(intent)
+            promise.resolve(null)
+        } else {
+            // Android does not provide an API to programmatically disable discoverable mode;
+            // it times out automatically. Resolve immediately.
+            promise.resolve(null)
+        }
     }
 }
