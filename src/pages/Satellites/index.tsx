@@ -1,8 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
-import { useEffect, useState, useContext, type FC } from 'react';
+import { useEffect, useState, useContext, useCallback, type FC } from 'react';
 import { BackHandler } from 'react-native';
 import { View, ScrollView } from 'react-native';
-import { Text, useTheme, Surface, Card, Appbar } from 'react-native-paper';
+import { Text, useTheme, Surface, Card, Appbar, Portal, Dialog, Button } from 'react-native-paper';
 import { NativeModules } from 'react-native';
 import { RouterContext } from '@/App';
 import { SatelliteSkyPlot } from '@/pages/Satellites/components/SkyPlot';
@@ -12,8 +12,45 @@ import { Satellite } from './types';
 export const Satellites: FC = () => {
 	const [satellites, setSatellites] = useState<Satellite[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [dialogVisible, setDialogVisible] = useState(false);
+	const [btRunning, setBtRunning] = useState(false);
+	const [connectedClients, setConnectedClients] = useState(0);
+	const [btLoading, setBtLoading] = useState(false);
 	const theme = useTheme();
 	const router = useContext(RouterContext);
+
+	const refreshBtStatus = useCallback(async () => {
+		try {
+			const status = await NativeModules.BluetoothNmeaModule.getServerStatus();
+			setBtRunning(status.isRunning);
+			setConnectedClients(status.connectedClients);
+		} catch (_) {}
+	}, []);
+
+	const toggleBluetoothSharing = useCallback(async () => {
+		setBtLoading(true);
+		try {
+			if (btRunning) {
+				await NativeModules.BluetoothNmeaModule.stopBluetoothServer();
+			} else {
+				await NativeModules.BluetoothNmeaModule.startBluetoothServer();
+			}
+			await refreshBtStatus();
+		} catch (e: any) {
+			console.warn('Bluetooth toggle error:', e?.message || e);
+		} finally {
+			setBtLoading(false);
+		}
+	}, [btRunning, refreshBtStatus]);
+
+	const openDialog = useCallback(() => {
+		setDialogVisible(true);
+		refreshBtStatus();
+	}, [refreshBtStatus]);
+
+	useEffect(() => {
+		refreshBtStatus();
+	}, [refreshBtStatus]);
 
 	useEffect(() => {
 		const GNSSModule = NativeModules.GNSSModule;
@@ -74,7 +111,26 @@ export const Satellites: FC = () => {
 			<Appbar.Header elevated>
 				<Appbar.BackAction onPress={() => router?.setRoute('Odometer')} />
 				<Appbar.Content title="Satellites" />
+				<Appbar.Action
+					icon={btRunning ? 'bluetooth-connect' : 'bluetooth'}
+					onPress={openDialog}
+				/>
 			</Appbar.Header>
+			<Portal>
+				<Dialog visible={dialogVisible} onDismiss={() => setDialogVisible(false)}>
+					<Dialog.Title>Bluetooth NMEA Share</Dialog.Title>
+					<Dialog.Content>
+						<Text variant="bodyLarge">Status: {btRunning ? 'Running' : 'Stopped'}</Text>
+						<Text variant="bodyMedium" style={{ marginTop: 4 }}>Connected clients: {connectedClients}</Text>
+					</Dialog.Content>
+					<Dialog.Actions>
+						<Button onPress={() => setDialogVisible(false)}>Close</Button>
+						<Button onPress={toggleBluetoothSharing} loading={btLoading} disabled={btLoading}>
+							{btRunning ? 'Stop' : 'Start'}
+						</Button>
+					</Dialog.Actions>
+				</Dialog>
+			</Portal>
 			<ScrollView contentContainerStyle={{ alignItems: 'center' }}>
 				<View style={{ height: 16 }} />
 				<View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 12, width: '95%', alignSelf: 'center' }}>
