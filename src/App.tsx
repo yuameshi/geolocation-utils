@@ -5,7 +5,7 @@
  * @format
  */
 import { PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
-import { BackHandler, StatusBar, useColorScheme } from 'react-native';
+import { BackHandler, StatusBar, useColorScheme, PermissionsAndroid, Platform, NativeModules } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { createContext, createElement, useEffect, useState } from 'react';
 import Geolocation from '@react-native-community/geolocation';
@@ -20,6 +20,7 @@ export const RouterContext = createContext<{
 	setRoute: (route: string) => void;
 	routes: { [key: string]: React.ComponentType<any> };
 } | null>(null);
+
 
 function App() {
 	const isDarkMode = useColorScheme() === 'dark';
@@ -106,6 +107,36 @@ function App() {
 			},
 			{ enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
 		);
+
+		const persistBluetoothNmeaSharingState = async () => {
+			if (Platform.OS !== 'android') return;
+			if ((Platform.Version as number) < 31) return;
+			const stored = storage.getString('settings.bluetoothNmeaEnabled');
+			if (stored !== 'true') return;
+
+			const hasLocation = await PermissionsAndroid.check(
+				PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+			);
+			const hasBtConnect = await PermissionsAndroid.check(
+				PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+			);
+			const hasBtScan = await PermissionsAndroid.check(
+				PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+			);
+
+			if (!hasLocation || !hasBtConnect || !hasBtScan) {
+				console.warn('Bluetooth NMEA auto-start skipped: missing permissions.');
+				return;
+			}
+
+			try {
+				await NativeModules.BluetoothNmeaModule.startBluetoothServer();
+			} catch (e: any) {
+				console.warn('Bluetooth NMEA auto-start failed:', e?.message || e);
+			}
+		};
+
+		persistBluetoothNmeaSharingState();
 
 		return () => {
 			// storage.remove('session.appStartedAt');

@@ -8,6 +8,7 @@ import { RouterContext } from '@/App';
 import { SatelliteSkyPlot } from '@/pages/Satellites/components/SkyPlot';
 import { SatelliteTable } from '@/pages/Satellites/components/SatelliteTable';
 import { Satellite } from './types';
+import { storage } from '@/storage';
 
 export const Satellites: FC = () => {
 	const [satellites, setSatellites] = useState<Satellite[]>([]);
@@ -15,7 +16,7 @@ export const Satellites: FC = () => {
 	const [dialogVisible, setDialogVisible] = useState(false);
 	const [btRunning, setBtRunning] = useState(false);
 	const [connectedClients, setConnectedClients] = useState(0);
-	const [devices, setDevices] = useState<{name: string; address: string}[]>([]);
+	const [devices, setDevices] = useState<{ name: string; address: string }[]>([]);
 	const [btLoading, setBtLoading] = useState(false);
 	const [discoverable, setDiscoverable] = useState(false);
 	const theme = useTheme();
@@ -27,7 +28,9 @@ export const Satellites: FC = () => {
 			setBtRunning(status.isRunning);
 			setConnectedClients(status.connectedClients);
 			setDevices(status.devices ?? []);
-		} catch (_) {}
+		} catch (e) {
+			console.warn('Failed to get Bluetooth server status:', e);
+		}
 	}, []);
 
 	const toggleBluetoothSharing = useCallback(async () => {
@@ -35,12 +38,10 @@ export const Satellites: FC = () => {
 		try {
 			if (btRunning) {
 				await NativeModules.BluetoothNmeaModule.stopBluetoothServer();
+				storage.set('settings.bluetoothNmeaEnabled', 'false');
 				setDiscoverable(false);
 			} else {
-				const granted = await PermissionsAndroid.requestMultiple([
-					PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-					PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-				]);
+				const granted = await PermissionsAndroid.requestMultiple([PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT, PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN]);
 				const connectGranted = granted[PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT] === PermissionsAndroid.RESULTS.GRANTED;
 				const scanGranted = granted[PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN] === PermissionsAndroid.RESULTS.GRANTED;
 				if (!connectGranted || !scanGranted) {
@@ -49,6 +50,7 @@ export const Satellites: FC = () => {
 					return;
 				}
 				await NativeModules.BluetoothNmeaModule.startBluetoothServer();
+				storage.set('settings.bluetoothNmeaEnabled', 'true');
 			}
 			await refreshBtStatus();
 		} catch (e: any) {
@@ -69,9 +71,7 @@ export const Satellites: FC = () => {
 
 	const toggleDiscoverable = useCallback(async (value: boolean) => {
 		if (value) {
-			const granted = await PermissionsAndroid.request(
-				PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADVERTISE,
-			);
+			const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADVERTISE);
 			if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
 				Alert.alert('Permission required', 'Bluetooth advertise permission is required to enable discoverable mode.');
 				return;
@@ -154,25 +154,44 @@ export const Satellites: FC = () => {
 				/>
 			</Appbar.Header>
 			<Portal>
-				<Dialog visible={dialogVisible} onDismiss={() => setDialogVisible(false)}>
+				<Dialog
+					visible={dialogVisible}
+					onDismiss={() => setDialogVisible(false)}
+				>
 					<Dialog.Title>Bluetooth NMEA Share</Dialog.Title>
 					<Dialog.Content>
 						<Text variant="bodyLarge">Status: {btRunning ? 'Running' : 'Stopped'}</Text>
-						<Text variant="bodyMedium" style={{ marginTop: 4 }}>Connected clients: {connectedClients}</Text>
+						<Text
+							variant="bodyMedium"
+							style={{ marginTop: 4 }}
+						>
+							Connected clients: {connectedClients}
+						</Text>
 						{btRunning && (
 							<View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
 								<Text variant="bodyMedium">Discoverable</Text>
-								<Switch value={discoverable} onValueChange={toggleDiscoverable} />
+								<Switch
+									value={discoverable}
+									onValueChange={toggleDiscoverable}
+								/>
 							</View>
 						)}
 						{btRunning && devices.length > 0 && (
 							<>
 								<Divider style={{ marginTop: 12, marginBottom: 8 }} />
 								<Text variant="labelLarge">Connected devices</Text>
-								{devices.map((dev, i) => (
-									<View key={dev.address} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 }}>
+								{devices.map(dev => (
+									<View
+										key={dev.address}
+										style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 }}
+									>
 										<Text variant="bodyMedium">{dev.name}</Text>
-										<Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>{dev.address}</Text>
+										<Text
+											variant="bodySmall"
+											style={{ color: theme.colors.onSurfaceVariant }}
+										>
+											{dev.address}
+										</Text>
 									</View>
 								))}
 							</>
@@ -180,7 +199,11 @@ export const Satellites: FC = () => {
 					</Dialog.Content>
 					<Dialog.Actions>
 						<Button onPress={() => setDialogVisible(false)}>Close</Button>
-						<Button onPress={toggleBluetoothSharing} loading={btLoading} disabled={btLoading}>
+						<Button
+							onPress={toggleBluetoothSharing}
+							loading={btLoading}
+							disabled={btLoading}
+						>
 							{btRunning ? 'Stop' : 'Start'}
 						</Button>
 					</Dialog.Actions>
