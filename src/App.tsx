@@ -13,6 +13,7 @@ import { storage } from './storage';
 
 import { Odometer } from './pages/Odometer';
 import { Satellites } from './pages/Satellites';
+import { HUD } from './pages/HUD';
 
 export const RouterContext = createContext<{
 	route: string;
@@ -28,6 +29,7 @@ function App() {
 	const routes: { [key: string]: React.ComponentType<any> } = {
 		Odometer: Odometer,
 		Satellites: Satellites,
+		HUD: HUD,
 	};
 
 	useEffect(() => {

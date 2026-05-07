@@ -7,7 +7,7 @@ import com.facebook.react.uimanager.ViewManager
 
 class GNSSPackage : ReactPackage {
     override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
-        return listOf(GNSSModule(reactContext), BluetoothNmeaModule(reactContext))
+        return listOf(GNSSModule(reactContext), BluetoothNmeaModule(reactContext), ScreenControlModule(reactContext))
     }
 
     override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {
